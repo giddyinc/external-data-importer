@@ -3,9 +3,9 @@ import braintree
 gateway = braintree.BraintreeGateway(
   braintree.Configuration(
     environment=braintree.Environment.Sandbox,
-    merchant_id='ywkk3y9tjttb8s4h',
-    public_key='y98zgwhtr629sxw7',
-    private_key='01ed02c4f687dde7abaf96aa29b7cc6b'
+    merchant_id='....',
+    public_key='....',
+    private_key='.......'
   )
 )
 
