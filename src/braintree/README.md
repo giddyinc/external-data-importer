@@ -3,5 +3,41 @@ This is based off jira ticket [DATA-180](https://giddyinc.atlassian.net/browse/D
 
 The code will run as an airflow job - details here
 
-to run locally use
-`python3 braintree_report.py`
+### Setting up environment
+* Install dependencies using `pip requirements.txt`
+* Update secrets and config files with appropriate values
+* Create table in database if does not exist
+* Start app using python3 `python3 braintree/braintree_report.py`
+
+
+### Create table
+```
+create table <schema_name>.<table_name>
+(
+transaction_id VARCHAR (255),
+transaction_type VARCHAR (255),
+transaction_status VARCHAR (255),
+created_datetime timestamp,
+submitted_for_settlement_date timestamp,
+settlement_date timestamp,
+disbursement_date timestamp,
+merchant_account VARCHAR (255),
+amount_authorized VARCHAR (255),
+amount_submitted_for_settlement VARCHAR (255),
+service_fee VARCHAR (255),
+tax_amount VARCHAR (255),
+tax_exempt VARCHAR (255),
+purchase_order_number VARCHAR (255),
+order_gid VARCHAR (255),
+order_id VARCHAR (255),
+refunded_transaction_id VARCHAR (255),
+payment_instrument_type VARCHAR (255),
+card_type VARCHAR (255),
+customer_id VARCHAR (255),
+payment_method_token VARCHAR (255),
+customer_company VARCHAR (255),
+channel VARCHAR (255),
+processor VARCHAR (255),
+raw_data VARCHAR(65535)
+);
+```
