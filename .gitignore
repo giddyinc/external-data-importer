@@ -1,6 +1,10 @@
 # mac system files
 .DS_Store
 
+# secrets
+secrets.prod.json
+secrets.staging.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
