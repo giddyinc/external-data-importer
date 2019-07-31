@@ -2,6 +2,10 @@
 This is based off jira ticket [DATA-180](https://giddyinc.atlassian.net/browse/DATA-180)
 
 The code will run as an airflow job - details here
+### TODO
+1. Insert data using S3 uploads
+2. Data duplicates
+3. API call limits
 
 ### Setting up environment
 * Install dependencies using `pip requirements.txt`
