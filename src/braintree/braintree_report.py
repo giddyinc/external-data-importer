@@ -14,55 +14,6 @@ logging.basicConfig(level=logging.INFO, \
     datefmt="%Y-%m-%d %H:%M:%S", \
     stream=sys.stdout)
 
-# try:
-#     with psycopg2.connect(dbname="minal", user="minal", host="localhost", ) as conn:
-#         with conn.cursor() as cursor:
-#             for transaction in search_results.items:
-#                 transaction_id = transaction.id or "transaction.id"
-#                 transaction_type = transaction.type or "transaction.type"
-#                 transaction_status = transaction.status or "transaction.status"
-#                 transaction_created_at = transaction.created_at or "transaction.created_at"
-#                 submitted_for_settlement_date = None
-#                 settlement_date = None
-#                 transaction_disbursement_date = datetime(1907,1,1)#""transaction.disbursement_date" #if transaction.disbursement_date is None else transaction.disbursement_date
-#                 transaction_merchant_account_id = transaction.merchant_account_id or "transaction.merchant_account_id"
-#                 amount_authorized = None
-#                 amount_submitted_for_settlement = None
-#                 transaction_service_fee_amount = transaction.service_fee_amount or "transaction.service_fee_amount"
-#                 transaction_tax_amount = transaction.tax_amount or "transaction.tax_amount"
-#                 transaction_tax_exempt = transaction.tax_exempt or "transaction.tax_exempt"
-#                 transaction_purchase_order_number = transaction.purchase_order_number or "transaction.purchase_order_number"
-#                 transaction_order_gid = "transaction.order_gid"# or "transaction.order_gid"
-#                 transaction_order_id = transaction.order_id or "transaction.order_id"
-#                 transaction_refunded_transaction_id = transaction.refunded_transaction_id or "transaction.refunded_transaction_id"
-#                 transaction_payment_instrument_type = transaction.payment_instrument_type or "transaction.payment_instrument_type"
-#                 transaction_card_type = transaction.credit_card_details.card_type or "transaction.credit_card_details.card_type"
-#                 transaction_customer_id = "transaction.customer_id"# or "transaction.customer_id"
-#                 transaction_token = transaction.credit_card_details.token or "transaction.credit_card_details.token"
-#                 transaction_customer_company = "transaction.customer_company"# or "transaction.customer_company"
-#                 transaction_channel = transaction.channel or "transaction.channel"
-#                 transaction_processor = "transaction.processor"
-
-#                 for status_event in transaction.status_history:
-#                     if status_event.status == "submitted_for_settlement":
-#                         submitted_for_settlement_date = status_event.timestamp
-#                         amount_submitted_for_settlement = status_event.amount
-#                     elif status_event.status == "settled":
-#                         settlement_date = status_event.timestamp
-#                     elif status_event.status == "authorized":
-#                         amount_authorized = status_event.amount
-
-#                 print (transaction_id,transaction_type,transaction_status,transaction_created_at,submitted_for_settlement_date,settlement_date,transaction_disbursement_date,transaction_merchant_account_id,amount_authorized,amount_submitted_for_settlement,transaction_service_fee_amount,transaction_tax_amount,transaction_tax_exempt,transaction_purchase_order_number,transaction_order_gid,transaction_order_id,transaction_refunded_transaction_id,transaction_payment_instrument_type,transaction_card_type,transaction_customer_id,transaction_token,transaction_customer_company,transaction_channel,transaction_processor,str(transaction))
-
-
-#                 sql = "insert into test.braintree_settlements (transaction_id,transaction_type,transaction_status,created_datetime,submitted_for_settlement_date,settlement_date,disbursement_date,merchant_account,amount_authorized,amount_submitted_for_settlement,service_fee,tax_amount,tax_exempt,purchase_order_number,order_gid,order_id,refunded_transaction_id,payment_instrument_type,card_type,customer_id,payment_method_token,customer_company,channel,processor,raw) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-#                 params = (transaction_id,transaction_type,transaction_status,transaction_created_at,submitted_for_settlement_date,settlement_date,transaction_disbursement_date,transaction_merchant_account_id,amount_authorized,amount_submitted_for_settlement,transaction_service_fee_amount,transaction_tax_amount,transaction_tax_exempt,transaction_purchase_order_number,transaction_order_gid,transaction_order_id,transaction_refunded_transaction_id,transaction_payment_instrument_type,transaction_card_type,transaction_customer_id,transaction_token,transaction_customer_company,transaction_channel,transaction_processor,str(transaction))
-#                 cursor.execute(sql,params)
-#                 conn.commit()
-# except Exception as e:
-#     print (str(e))
-#     conn.rollback()
-
 def get_braintree_connection(braintree_config):
     LOG.info("config %s" % braintree_config)
     braintree_connection = braintree.BraintreeGateway(
