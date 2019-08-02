@@ -89,7 +89,7 @@ def save_to_database(search_results,db_config,schema_name,table_name):
                     cursor.execute(sql,params)
                     conn.commit()
                     count_saved = count_saved + 1
-                    if (count_saved == 20):
+                    if (count_saved == 10):
                         break
     except Exception as e:
         LOG.info(str(e))
@@ -108,23 +108,16 @@ def get_data():
     secret_file_path = SECRET_PATH+"secrets."+APP_ENV+".json"
     config_file_path = APP_HOME+"src/config/config-braintree."+APP_ENV+".json"
 
-    files = os.listdir(APP_HOME)
-    LOG.info("files in APP HOME %s" % files)
-    files = os.listdir(APP_HOME+"/src")
-    LOG.info("files in APP HOME/src %s" % files)
-    files = os.listdir(APP_HOME+"/src/secrets")
-    LOG.info("files in APP HOME/src/secrets %s" % files)
+    config = utils.load_config( secret_file_path,config_file_path )
+    LOG.info("loaded config with database host:%s and user:%s" % (config['braintree']['database']['host'],config['braintree']['database']['user']))
 
-    # config = utils.load_config( secret_file_path,config_file_path )
-    # LOG.info("loaded config with database host:%s and user:%s" % (config['braintree']['database']['host'],config['braintree']['database']['user']))
+    braintree_connection = get_braintree_connection(config['braintree']['braintree'])
+    LOG.info("braintree_connection %s" % braintree_connection)
+    search_results = get_search_results(braintree_connection)
+    LOG.info("search_results: %s " % search_results)
 
-    # braintree_connection = get_braintree_connection(config['braintree']['braintree'])
-    # LOG.info("braintree_connection %s" % braintree_connection)
-    # search_results = get_search_results(braintree_connection)
-    # LOG.info("search_results: %s " % search_results)
-
-    # count_saved = save_to_database(search_results,config['braintree']['database'],config['schema']['schema_name'],config['schema']['table_name'])
-    # LOG.info("Script Complete - saved %s rows to database" % count_saved)
+    count_saved = save_to_database(search_results,config['braintree']['database'],config['schema']['schema_name'],config['schema']['table_name'])
+    LOG.info("Script Complete - saved %s rows to database" % count_saved)
 
 if __name__=="__main__":
     get_data()
