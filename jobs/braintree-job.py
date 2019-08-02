@@ -7,13 +7,13 @@ args = {
     'owner': 'Data',
     'retries': 3,
     'retry_delay':timedelta(minutes=5),
-    'start_date': airflow.utils.dates.days_ago(1)
+    'start_date': airflow.utils.dates.days_ago(1),
     'email_on_failure': True,
     'email': 'minal@boxed.com'
 }
 
 
-dag = DAG(dag_id='braintree_job',
+dag = DAG(dag_id='braintree-job',
 schedule_interval='45 9 * * *',
 catchup=False,
 default_args=args)
