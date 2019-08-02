@@ -1,0 +1,6 @@
+{
+    "schema": {
+        "schema_name":"externalsources",
+        "table_name": "minal_test_braintree_settlements"
+    }
+}

@@ -1,0 +1,4 @@
+registries:
+  - us.gcr.io/boxed-api-staging/boxed
+  - us.gcr.io/boxed-api/boxed
+repository: external-data-importer
