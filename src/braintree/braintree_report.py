@@ -89,6 +89,8 @@ def save_to_database(search_results,db_config,schema_name,table_name):
                     cursor.execute(sql,params)
                     conn.commit()
                     count_saved = count_saved + 1
+                    if (count_saved == 20):
+                        break
     except Exception as e:
         LOG.info(str(e))
         conn.rollback()
@@ -97,23 +99,16 @@ def save_to_database(search_results,db_config,schema_name,table_name):
 
 def get_data():
     LOG.info('App started')
-    APP_HOME = "src/"#os.environ['APP_HOME']
+    APP_HOME = os.environ['APP_HOME']
     LOG.info("APP_HOME:"+APP_HOME)
-    APP_ENV = "prod"#os.environ['APP_ENV']
+    APP_ENV = os.environ['APP_ENV']
     LOG.info("APP_ENV:"+APP_ENV)
-    SECRET_PATH = "secrets/"#os.environ['SECRET_PATH']
+    SECRET_PATH = os.environ['SECRET_PATH']
     LOG.info("SECRET_PATH:"+SECRET_PATH)
     secret_file_path = SECRET_PATH+"secrets."+APP_ENV+".json"
-    config_file_path = "config/config-braintree."+APP_ENV+".json"
-    config_file = "config-braintree.local.json"
-    secrets_file = "secrets/secrets.local.json"
-
-    LOG.info("           secret path:%s" % secrets_file)
-    LOG.info("secret path calculated:%s" % secret_file_path)
-    LOG.info("           config path:%s" % config_file)
-    LOG.info("config path calculated:%s" % config_file_path)
+    config_file_path = APP_HOME+"src/config/config-braintree."+APP_ENV+".json"
     config = utils.load_config( secret_file_path,config_file_path )
-    LOG.info("config %s" % config)
+    LOG.info("loaded config with database host:%s and user:%s" % (config['braintree']['database']['host'],config['braintree']['database']['user']))
 
     braintree_connection = get_braintree_connection(config['braintree']['braintree'])
     LOG.info("braintree_connection %s" % braintree_connection)
