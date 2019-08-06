@@ -1,27 +1,30 @@
 from ftplib import FTP
 
 #domain name or server ip:
-ftp_url = 'test.rebex.net'
-ftp_user = 'demo'
-ftp_password = 'password'
+config = {
+    'ftp_url' : 'test.rebex.net',
+    'ftp_user': 'demo',
+    'ftp_password' : 'password'
+}
 
-ftp = FTP(ftp_url)
-ftp.login(user=ftp_user, passwd=ftp_password)
+def get_ftp_connection(config):
+    ftp = FTP(config['ftp_url'])
+    ftp.login(user=config['ftp_user'], passwd=config['ftp_password'])
+    return ftp
 
-def grabFile():
+def download_file(ftp):
     filename = 'readme.txt'
     localfile = open(filename, 'wb')
     ftp.retrbinary('RETR ' + filename, localfile.write, 1024)
-    ftp.quit()
     localfile.close()
+
     
-
-
-with FTP(ftp_url) as ftp:    
+def close_ftp_connection(ftp):
     try:
-        ftp.login(user=ftp_user, passwd=ftp_password)
-        files = []
-        ftp.dir(files.append)
-        print(files)            
-    except ftplib.all_errors as e:
-        print('FTP error:', e)
+        ftp.quit()
+    except Exception as e:
+        ftp.close()
+
+ftp = get_ftp_connection(config)
+download_file(ftp)
+close_ftp_connection(ftp)
