@@ -11,3 +11,13 @@ def grabFile():
     ftp.quit()
     localfile.close()
     
+
+
+with FTP('ftp://test.rebex.net/') as ftp:    
+    try:
+        ftp.login(user='demo', passwd = 'password')
+        files = []
+        ftp.dir(files.append)
+        print(files)            
+    except ftplib.all_errors as e:
+        print('FTP error:', e)
