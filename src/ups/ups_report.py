@@ -1,8 +1,12 @@
 from ftplib import FTP
 
 #domain name or server ip:
-ftp = FTP('ftp://test.rebex.net/')
-ftp.login(user='demo', passwd = 'password')
+ftp_url = 'test.rebex.net'
+ftp_user = 'demo'
+ftp_password = 'password'
+
+ftp = FTP(ftp_url)
+ftp.login(user=ftp_user, passwd=ftp_password)
 
 def grabFile():
     filename = 'readme.txt'
@@ -13,9 +17,9 @@ def grabFile():
     
 
 
-with FTP('ftp://test.rebex.net/') as ftp:    
+with FTP(ftp_url) as ftp:    
     try:
-        ftp.login(user='demo', passwd = 'password')
+        ftp.login(user=ftp_user, passwd=ftp_password)
         files = []
         ftp.dir(files.append)
         print(files)            
