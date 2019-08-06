@@ -12,10 +12,11 @@ def get_ftp_connection(config):
     ftp.login(user=config['ftp_user'], passwd=config['ftp_password'])
     return ftp
 
-def download_file(ftp):
-    filename = 'readme.txt'
-    localfile = open(filename, 'wb')
-    ftp.retrbinary('RETR ' + filename, localfile.write, 1024)
+def download_file(ftp, ftp_path, ftp_filename, local_path, local_filename):
+    filepath = local_path+local_filename
+    localfile = open(filepath, 'wb')
+    ftp.cwd(ftp_path)
+    ftp.retrbinary('RETR ' + ftp_filename, localfile.write, 1024)
     localfile.close()
 
     
@@ -26,5 +27,5 @@ def close_ftp_connection(ftp):
         ftp.close()
 
 ftp = get_ftp_connection(config)
-download_file(ftp)
+download_file(ftp,'/pub/example/', 'readme.txt', 'deploy/', 'readme.txt')
 close_ftp_connection(ftp)
