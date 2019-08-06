@@ -27,10 +27,9 @@ def get_braintree_connection(braintree_config):
     )
     return braintree_connection
 
-def get_search_results(braintree_connection):
-    N = 2
+def get_search_results(braintree_connection ,N):
     date_N_days_ago = datetime.now() - timedelta(days=N)
-    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = datetime.now() - timedelta(days=N-1)
 
     search_results = braintree_connection.transaction.search(
       braintree.TransactionSearch.settled_at.between(
@@ -47,7 +46,7 @@ def copy_into_redshift(config, s3_key):
         LOG.info("redshift connected to host %s with user %s" % (db_config["host"],db_config["user"]))
         LOG.info("copying to %s.%s" % (config['schema']['schema_name'],config['schema']['table_name']))
         with rs_conn.cursor() as rs_cur:
-            query_template = "COPY %s.%s (transaction_id,transaction_type,transaction_status,created_datetime,submitted_for_settlement_date,settlement_date,disbursement_date,merchant_account,amount_authorized,amount_submitted_for_settlement,service_fee,tax_amount,tax_exempt,purchase_order_number,order_id,refunded_transaction_id,payment_instrument_type,card_type,customer_id,payment_method_token,customer_company,channel, processor,raw_data)    FROM 's3://%s/%s' credentials 'aws_access_key_id=%s;aws_secret_access_key=%s' CSV DELIMITER ',' TIMEFORMAT 'YYYY-MM-DD HH:MI:SS' IGNOREBLANKLINES IGNOREHEADER 1 TRUNCATECOLUMNS GZIP maxerror 10"
+            query_template = "COPY %s.%s (transaction_id,transaction_type,transaction_status,created_datetime,submitted_for_settlement_date,settlement_date,disbursement_date,merchant_account,amount_authorized,amount_submitted_for_settlement,service_fee,tax_amount,tax_exempt,purchase_order_number,order_id,refunded_transaction_id,payment_instrument_type,card_type,customer_id,payment_method_token,customer_company,channel, processor, data_uploaded_at)    FROM 's3://%s/%s' credentials 'aws_access_key_id=%s;aws_secret_access_key=%s' CSV DELIMITER ',' TIMEFORMAT 'YYYY-MM-DD HH:MI:SS' IGNOREBLANKLINES IGNOREHEADER 1 TRUNCATECOLUMNS GZIP"
 
             query = query_template % (
                     config['schema']['schema_name'],
@@ -64,7 +63,6 @@ def copy_into_redshift(config, s3_key):
                 LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['schema']['table_name'], query))
                 raise e
     rs_conn.close()
-    LOG.info("Data Loaded.")
 
 def save_to_database(search_results,db_config,schema_name,table_name):
     count_saved = 0
@@ -148,7 +146,6 @@ def process_search_results(search_results,braintree_connection):
             t['transaction_customer_company'] = None
             t['transaction_channel'] = transaction.channel
             t['transaction_processor'] = None
-            t['raw_data'] = str(transaction)
 
             for status_event in transaction.status_history:
                 if status_event.status == "submitted_for_settlement":
@@ -159,13 +156,13 @@ def process_search_results(search_results,braintree_connection):
                 elif status_event.status == "authorized":
                     t['amount_authorized'] = status_event.amount
 
-            if (t['transaction_payment_instrument_type'] == "paypal_account".lower()):
+            if (t['transaction_payment_instrument_type'] == "paypal_account"):
                  t['transaction_processor'] = "Paypal"
-            elif (t['transaction_card_type'] == "Amex Express".lower() or t['transaction_card_type'] == "American Express".lower()):
+            elif (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express"):
                  t['transaction_processor'] = "American Express Merchant Account"
-            elif (t['transaction_card_type'] == "Visa".lower() or t['transaction_card_type'] == "Mastercard".lower() or t['transaction_card_type'] == "Discover".lower()):
+            elif (t['transaction_card_type'] == "Visa" or t['transaction_card_type'] == "Mastercard" or t['transaction_card_type'] == "Discover"):
                  t['transaction_processor'] = "Braintree"
-            elif (t['transaction_card_type'] == "UnionPay".lower() or t['transaction_card_type'] == "Elo".lower() or t['transaction_card_type'] == "JCB".lower()):
+            elif (t['transaction_card_type'] == "UnionPay" or t['transaction_card_type'] == "Elo" or t['transaction_card_type'] == "JCB"):
                  t['transaction_processor'] = "Braintree"
             else:
                  t['transaction_processor'] = "ERROR - UPDATE LOGIC"
@@ -199,35 +196,39 @@ def get_data():
 
     braintree_connection = get_braintree_connection(config['braintree']['braintree'])
     LOG.info("braintree_connection %s" % braintree_connection)
-    search_results = get_search_results(braintree_connection)
-    LOG.info("search_results count : %s " % search_results.maximum_size)
 
-    #write to s3
-    batchTimestamp = datetime.now()
     fieldnames = ['transaction_id','transaction_type','transaction_status','transaction_created_at','submitted_for_settlement_date','settlement_date','transaction_disbursement_date','transaction_merchant_account_id'
-    'amount_authorized','amount_submitted_for_settlement','transaction_service_fee_amount','transaction_tax_amount','transaction_tax_exempt','transaction_purchase_order_number','transaction_order_gid',
-    'transaction_order_id','transaction_refunded_transaction_id','transaction_payment_instrument_type','transaction_card_type','transaction_customer_id','transaction_token','transaction_customer_company',
-    'transaction_channel','transaction_processor','raw_data']
+        'amount_authorized','amount_submitted_for_settlement','transaction_service_fee_amount','transaction_tax_amount','transaction_tax_exempt','transaction_purchase_order_number','transaction_order_gid',
+        'transaction_order_id','transaction_refunded_transaction_id','transaction_payment_instrument_type','transaction_card_type','transaction_customer_id','transaction_token','transaction_customer_company',
+        'transaction_channel','transaction_processor','raw_data']
 
-    file_path = os.path.join(config.get('PG_DUMP_TEMP_DIR'), str(batchTimestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))) + '.gz'
-    s3_key_name = os.path.join(config['S3']['UPLOAD_DIR'],batchTimestamp.strftime('%Y-%m-%d/%H_%M_%S.%f')) + '.gz'
+    for n in range(5,8):
+        # get search results
+        search_results = get_search_results(braintree_connection,n)
+        LOG.info("search_results count : %s " % search_results.maximum_size)
 
-    search_results_processed = process_search_results(search_results,braintree_connection)
-    LOG.info("count of search_results processed %s " % len(search_results_processed))
+        # process results
+        search_results_processed = process_search_results(search_results,braintree_connection)
+        LOG.info("count of search_results processed %s " % len(search_results_processed))
 
-    with gzip.open( file_path , 'wt') as tempfile:
-        csv_writer = csv.writer(tempfile, dialect=format)#, fieldnames=fieldnames )
-        csv_writer.writerow(['transaction_id','transaction_type','transaction_status','created_datetime','submitted_for_settlement_date','settlement_date,disbursement_date','merchant_account','amount_authorized,amount_submitted_for_settlement,service_fee','tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type','customer_id','payment_method_token','customer_company','channel','processor','raw_data'])
-        for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_channel'],r['transaction_processor'],r['raw_data']])
-    LOG.info("Wrote to  temp file %s" % file_path)
+        #write to s3
+        batchTimestamp = datetime.now()
+        file_path = os.path.join(config.get('PG_DUMP_TEMP_DIR'), str(batchTimestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))) + '.gz'
+        s3_key_name = os.path.join(config['S3']['UPLOAD_DIR'],batchTimestamp.strftime('%Y-%m-%d/%H_%M_%S.%f')) + '.gz'
+        with gzip.open( file_path , 'wt') as tempfile:
+            csv_writer = csv.writer(tempfile, dialect=format)#, fieldnames=fieldnames )
+            csv_writer.writerow(['transaction_id','transaction_type','transaction_status','created_datetime','submitted_for_settlement_date','settlement_date,disbursement_date','merchant_account','amount_authorized,amount_submitted_for_settlement,service_fee','tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type','customer_id','payment_method_token','customer_company','channel','processor','data_uploaded_at'])
+            for r in search_results_processed:
+                csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_channel'],r['transaction_processor'],batchTimestamp])
+        LOG.info("Wrote to  temp file %s" % file_path)
+        s3conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
+        utils.s3_upload(s3conn, config['S3']['BUCKET'], s3_key_name, file_path)
+        LOG.info("uploaded to s3 %s" % s3_key_name)
+        os.remove(file_path)
 
-    s3conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
-    utils.s3_upload(s3conn, config['S3']['BUCKET'], s3_key_name, file_path)
-    LOG.info("uploaded to s3 %s" % s3_key_name)
-    os.remove(file_path)
-
-    copy_into_redshift(config, s3_key_name)
+        copy_into_redshift(config, s3_key_name)
+        LOG.info("copied to redshift")
+        LOG.info("-------------  processed data for n = %s ----------------------------" % n)
 
 if __name__=="__main__":
     get_data()
