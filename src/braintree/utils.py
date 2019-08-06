@@ -1,8 +1,21 @@
 import os
 import json
 import logging
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
 
 LOG = logging.getLogger(__name__)
+
+def s3_connect(accessKey, secretKey):
+    return S3Connection( accessKey, secretKey)
+
+def s3_upload(s3conn, s3Bucket,  s3key, fileName):
+    bucket = s3conn.get_bucket(s3Bucket)
+    if ( not bucket ):
+        return
+    key = Key(bucket)
+    key.key = s3key
+    key.set_contents_from_filename(fileName)
 
 def load_config(secret_file_path,config_file_path):
     """ Load config object from config file """
