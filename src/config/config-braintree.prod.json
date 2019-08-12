@@ -1,4 +1,10 @@
 {
+    "PG_DUMP_TEMP_DIR": "/srv/app/temp/braintree/prod",
+
+    "S3": {
+        "BUCKET":  "boxed-pensieve-s3-redshift",
+        "UPLOAD_DIR": "braintree/prod"
+    },
     "schema": {
         "schema_name":"externalsources",
         "table_name": "minal_test_braintree_settlements"
