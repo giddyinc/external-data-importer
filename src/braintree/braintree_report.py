@@ -183,6 +183,8 @@ def get_data():
     LOG.info("APP_ENV:"+APP_ENV)
     SECRET_PATH = os.environ['SECRET_PATH']
     LOG.info("SECRET_PATH:"+SECRET_PATH)
+    secret_file_path = SECRET_PATH+"secrets."+APP_ENV+".json"
+    config_file_path = APP_HOME+"src/config/config-braintree."+APP_ENV+".json"
     #secret_file_path = "secrets/secrets.prod.json"
     #config_file_path = "config/config-braintree.prod.json"
 
