@@ -18,6 +18,21 @@ logging.basicConfig(level=logging.INFO, \
     datefmt="%Y-%m-%d %H:%M:%S", \
     stream=sys.stdout)
 
+def check_dupes(config):
+    db_config = config['braintree']['database']
+    with psycopg2.connect(dbname=db_config["database"], user=db_config["user"], host=db_config["host"],port=db_config["port"],password=db_config["password"] ) as rs_conn:
+        with rs_conn.cursor() as rs_cur:
+            query = "select transaction_id,count(*) as count  from %s.%s group by transaction_id having count > 1;" % (config['schema']['schema_name'],config['schema']['table_name'])
+            try:
+                rs_cur.execute( query)
+                rs_conn.commit()
+            except Exception as e:
+                rs_conn.rollback()
+                LOG.error("Error checking for dupes in redsfit table %s.%s with error: %s" % (config['schema']['schema_name'],config['schema']['table_name'],str(e) ))
+            if(rs_cur.rowcount > 0):
+                raise Exception("Found dupes in braintree import")
+    rs_conn.close()
+    
 def get_last_updated(config):
     max_date_from_db = None
     db_config = config['braintree']['database']
@@ -225,6 +240,10 @@ def get_data():
         #copy to redshift
         copy_into_redshift(config, s3_key_name,fieldnames)
         LOG.info("copied to redshift")
+
+        #check for dupes
+        check_dupes(config)
+        LOG.info("check for dupes passed")
 
         LOG.info("-------------  processed data for date = %s ----------------------------" % start.strftime('%Y-%m-%d %H:%M:%S.%f'))
 
