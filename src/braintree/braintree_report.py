@@ -243,6 +243,7 @@ def get_data():
 
         #check for dupes
         check_dupes(config)
+        LOG.info("check for dupes passed")
 
         LOG.info("-------------  processed data for date = %s ----------------------------" % start.strftime('%Y-%m-%d %H:%M:%S.%f'))
 
