@@ -138,6 +138,8 @@ def process_transaction(transaction):
     #processor logic here
     if (t['transaction_payment_instrument_type'] == "paypal_account"):
          t['transaction_processor'] = "Paypal"
+    elif (t['transaction_payment_instrument_type'] == "venmo_account"):
+         t['transaction_processor'] = "Braintree"
     elif (t['transaction_card_type'] is not None):
         if (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express"):
             t['transaction_processor'] = "American Express Merchant Account"
