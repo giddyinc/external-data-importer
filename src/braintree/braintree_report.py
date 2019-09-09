@@ -32,7 +32,7 @@ def check_dupes(config):
             if(rs_cur.rowcount > 0):
                 raise Exception("Found dupes in braintree import")
     rs_conn.close()
-    
+
 def get_last_updated(config):
     max_date_from_db = None
     db_config = config['braintree']['database']
@@ -91,12 +91,15 @@ def process_transaction(transaction):
     t['transaction_order_id'] = transaction.order_id
     t['transaction_refunded_transaction_id'] = transaction.refunded_transaction_id
     t['transaction_payment_instrument_type'] = transaction.payment_instrument_type
-    t['transaction_card_type'] = transaction.credit_card_details.card_type
     t['transaction_customer_id'] = None
     t['transaction_token'] = transaction.credit_card_details.token
     t['transaction_customer_company'] = None
     t['transaction_processor'] = None
+    t['settlement_batch_id'] = transaction.settlement_batch_id
+    t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
 
+
+    #status timestamps here
     for status_event in transaction.status_history:
         if status_event.status == "submitted_for_settlement":
             t['submitted_for_settlement_date'] = status_event.timestamp
@@ -106,8 +109,37 @@ def process_transaction(transaction):
         elif status_event.status == "authorized":
             t['amount_authorized'] = status_event.amount
 
+    #card type here
+    if (transaction.payment_instrument_type == 'amex_express_checkout_card'):
+        t['transaction_card_type'] = transaction.amex_express_checkout_card_details.card_type
+    elif (transaction.payment_instrument_type == "android_pay_card"):
+        t['transaction_card_type'] = transaction.android_pay_card_details.source_card_type
+    elif (transaction.payment_instrument_type ==  "apple_pay_card"):
+        t['transaction_card_type'] = transaction.apple_pay_details.card_type
+    elif (transaction.payment_instrument_type == "credit_card"):
+        t['transaction_card_type'] = transaction.credit_card_details.card_type
+    elif (transaction.payment_instrument_type == "masterpass_card"):
+        t['transaction_card_type'] = transaction.masterpass_card_details.card_type
+    elif (transaction.payment_instrument_type == "paypal_account"):
+        t['transaction_card_type'] = None
+    elif (transaction.payment_instrument_type == "paypal_here"):
+        t['transaction_card_type'] = transaction.paypal_here_details.payment_type
+    elif (transaction.payment_instrument_type == "samsung_pay_card"):
+        t['transaction_card_type'] = transaction.samsung_pay_card_details.card_type
+    elif (transaction.payment_instrument_type == "us_bank_account"):
+        t['transaction_card_type'] = None
+    elif (transaction.payment_instrument_type == "venmo_account"):
+        t['transaction_card_type'] = None
+    elif (transaction.payment_instrument_type == "visa_checkout_card"):
+        t['transaction_card_type'] = transaction.visa_checkout_card_details.card_type
+    else:
+        t['transaction_card_type'] = "Error - Unknown Payment Instrument Type"
+
+    #processor logic here
     if (t['transaction_payment_instrument_type'] == "paypal_account"):
          t['transaction_processor'] = "Paypal"
+    elif (t['transaction_payment_instrument_type'] == "venmo_account"):
+         t['transaction_processor'] = "Braintree"
     elif (t['transaction_card_type'] is not None):
         if (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express"):
             t['transaction_processor'] = "American Express Merchant Account"
@@ -152,7 +184,7 @@ def write_to_file(config,file_path,batchTimestamp,search_results_processed,field
         #csv_writer.writerow(['transaction_id','transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc','settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee','tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type','customer_id','payment_method_token','customer_company','processor','date_uploaded_at'])
         csv_writer.writerow(",".join(fieldnames))
         for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],batchTimestamp])
+            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],batchTimestamp])
     LOG.info("Wrote to  temp file %s" % file_path)
 
 def write_file_and_upload_to_s3(config,search_results_processed,fieldnames):
@@ -209,7 +241,7 @@ def get_data():
     fieldnames = ['transaction_id' ,'transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc',
     'settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee',
     'tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type',
-    'customer_id','payment_method_token','customer_company','processor','date_uploaded_at']
+    'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','date_uploaded_at']
 
 
     last_updated_date = get_last_updated(config)
