@@ -7,6 +7,6 @@
     },
     "schema": {
         "schema_name":"externalsources",
-        "table_name": "test_braintree_settlements"
+        "table_name": "braintree_settlements"
     }
 }
