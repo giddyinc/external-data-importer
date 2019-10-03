@@ -141,11 +141,13 @@ def process_transaction(transaction):
     elif (t['transaction_payment_instrument_type'] == "venmo_account"):
          t['transaction_processor'] = "Braintree"
     elif (t['transaction_card_type'] is not None):
-        if (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express"):
+        if (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express" or t['transaction_card_type'] == "Apple Pay - American Express"):
             t['transaction_processor'] = "American Express Merchant Account"
         elif (t['transaction_card_type'] == "Visa" or t['transaction_card_type'].lower() == "Mastercard".lower() or t['transaction_card_type'] == "Discover"):
             t['transaction_processor'] = "Braintree"
         elif (t['transaction_card_type'] == "UnionPay" or t['transaction_card_type'] == "Elo" or t['transaction_card_type'] == "JCB"):
+            t['transaction_processor'] = "Braintree"
+        elif (t['transaction_card_type'] == "Apple Pay - Discover" or t['transaction_card_type'] == "Apple Pay - Visa" or t['transaction_card_type'] == "Apple Pay - MasterCard"):
             t['transaction_processor'] = "Braintree"
     else:
          t['transaction_processor'] = "ERROR - UPDATE LOGIC"
