@@ -97,6 +97,7 @@ def process_transaction(transaction):
     t['transaction_processor'] = None
     t['settlement_batch_id'] = transaction.settlement_batch_id
     t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
+    t['user'] = None
 
 
     #status timestamps here
