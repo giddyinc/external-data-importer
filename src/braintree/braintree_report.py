@@ -97,6 +97,7 @@ def process_transaction(transaction):
     t['transaction_processor'] = None
     t['settlement_batch_id'] = transaction.settlement_batch_id
     t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
+    t['user'] = transaction.user
 
 
     #status timestamps here
@@ -186,7 +187,7 @@ def write_to_file(config,file_path,batchTimestamp,search_results_processed,field
         #csv_writer.writerow(['transaction_id','transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc','settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee','tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type','customer_id','payment_method_token','customer_company','processor','date_uploaded_at'])
         csv_writer.writerow(",".join(fieldnames))
         for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],batchTimestamp])
+            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],batchTimestamp])
     LOG.info("Wrote to  temp file %s" % file_path)
 
 def write_file_and_upload_to_s3(config,search_results_processed,fieldnames):
@@ -243,7 +244,7 @@ def get_data():
     fieldnames = ['transaction_id' ,'transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc',
     'settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee',
     'tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type',
-    'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','date_uploaded_at']
+    'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','"user"','date_uploaded_at']
 
 
     last_updated_date = get_last_updated(config)
