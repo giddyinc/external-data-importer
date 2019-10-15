@@ -97,7 +97,6 @@ def process_transaction(transaction):
     t['transaction_processor'] = None
     t['settlement_batch_id'] = transaction.settlement_batch_id
     t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
-    t['user'] = transaction.user
 
 
     #status timestamps here
@@ -109,6 +108,7 @@ def process_transaction(transaction):
             t['settlement_date'] = status_event.timestamp
         elif status_event.status == "authorized":
             t['amount_authorized'] = status_event.amount
+            t['user'] = status_event.user
 
     #card type here
     if (transaction.payment_instrument_type == 'amex_express_checkout_card'):
