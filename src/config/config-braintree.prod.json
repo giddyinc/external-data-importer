@@ -8,5 +8,12 @@
     "schema": {
         "schema_name":"externalsources",
         "table_name": "braintree_settlements"
+    },
+    "braintree":{
+        "database":{
+            "host":"pensieve-prod-5-vpc.cmitoh9ob6og.us-east-1.redshift.amazonaws.com",
+            "port":5439,
+            "database":"pensieve"
+        }
     }
 }
