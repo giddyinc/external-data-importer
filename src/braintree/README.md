@@ -3,9 +3,7 @@ This is based off jira ticket [DATA-180](https://giddyinc.atlassian.net/browse/D
 
 The code will run as an airflow job - details here
 ### TODO
-1. Insert data using S3 uploads
-2. Data duplicates
-3. API call limits
+API call limits
 
 ### Setting up environment
 * Install dependencies using `pip requirements.txt`
@@ -42,6 +40,9 @@ customer_company VARCHAR (128),
 processor VARCHAR (64),
 settlement_batch_id VARCHAR (64),
 settlement_batch_date VARCHAR(32),
+"user" VARCHAR (64),
 date_uploaded_at timestamp
-);
+)
+distkey(settlement_date_utc)
+;
 ```

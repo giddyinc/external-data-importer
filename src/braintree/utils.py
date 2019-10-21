@@ -50,7 +50,8 @@ def merge_dicts(a, b, path=[]):
     for key in b:
         if key in c:
             if isinstance(c[key], dict) and isinstance(b[key], dict):
-                c[key] = merge_dicts(c[key], b[key], path.append(str(key)))
+                path.append(str(key))
+                c[key] = merge_dicts(c[key], b[key], path)
             elif not isinstance(c[key], dict) and not isinstance(b[key], dict):
                 c[key] = b[key]
             else:
