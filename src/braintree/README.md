@@ -41,6 +41,9 @@ processor VARCHAR (64),
 settlement_batch_id VARCHAR (64),
 settlement_batch_date VARCHAR(32),
 "user" VARCHAR (64),
+shipping_country_name VARCHAR (64),
+shipping_postal_code VARCHAR(32),
+shipping_region VARCHAR(32),
 date_uploaded_at timestamp
 )
 distkey(settlement_date_utc)
