@@ -235,7 +235,6 @@ def get_data():
     config_file_path = APP_HOME+"src/config/config."+APP_ENV+".json"
 
     config = utils.load_config( secret_file_path,config_file_path )
-    LOG.info("loaded config %s " % (config))
     LOG.info("loaded config with database host:%s and user:%s" % (config['redshift']['host'],config['redshift']['user']))
 
     fieldnames = ['transaction_id' ,'transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc',
