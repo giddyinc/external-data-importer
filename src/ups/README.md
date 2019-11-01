@@ -13,7 +13,7 @@ The code will run as an airflow job - details here
 * Create table in database if does not exist
 * Start app using python3 `python3 ups/ups_report.py`
 
-###Running as docker Containter
+### Running as docker Containter
 * Add following at the end of Dockerfile
   * `ENV APP_ENV staging`
   * `CMD [ "python3" , "/srv/app/src/ups/ups_report.py" ]`
