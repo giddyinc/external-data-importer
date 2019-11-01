@@ -19,34 +19,34 @@ logging.basicConfig(level=logging.INFO, \
     stream=sys.stdout)
 
 def check_dupes(config):
-    db_config = config['braintree']['database']
+    db_config = config['redshift']
     with psycopg2.connect(dbname=db_config["database"], user=db_config["user"], host=db_config["host"],port=db_config["port"],password=db_config["password"] ) as rs_conn:
         with rs_conn.cursor() as rs_cur:
-            query = "select transaction_id,count(*) as count  from %s.%s group by transaction_id having count > 1;" % (config['schema']['schema_name'],config['schema']['table_name'])
+            query = "select transaction_id,count(*) as count  from %s.%s group by transaction_id having count > 1;" % (config['braintree']['schema']['schema_name'],config['braintree']['schema']['table_name'])
             try:
                 rs_cur.execute( query)
                 rs_conn.commit()
             except Exception as e:
                 rs_conn.rollback()
-                LOG.error("Error checking for dupes in redsfit table %s.%s with error: %s" % (config['schema']['schema_name'],config['schema']['table_name'],str(e) ))
+                LOG.error("Error checking for dupes in redshift table %s.%s with error: %s" % (config['braintree']['schema']['schema_name'],config['braintree']['schema']['table_name'],str(e) ))
             if(rs_cur.rowcount > 0):
                 raise Exception("Found dupes in braintree import")
     rs_conn.close()
 
 def get_last_updated(config):
     max_date_from_db = None
-    db_config = config['braintree']['database']
+    db_config = config['redshift']
     with psycopg2.connect(dbname=db_config["database"], user=db_config["user"], host=db_config["host"],port=db_config["port"],password=db_config["password"] ) as rs_conn:
         LOG.info("redshift connected to host %s with user %s" % (db_config["host"],db_config["user"]))
         with rs_conn.cursor() as rs_cur:
-            query = "select to_char(max(settlement_date_utc), 'YYYY-mm-dd HH24:MI:SS.US') from %s.%s" % (config['schema']['schema_name'],config['schema']['table_name'])
+            query = "select to_char(max(settlement_date_utc), 'YYYY-mm-dd HH24:MI:SS.US') from %s.%s" % (config['braintree']['schema']['schema_name'],config['braintree']['schema']['table_name'])
             try:
                 rs_cur.execute( query)
                 rs_conn.commit()
                 max_date_from_db = rs_cur.fetchall()[0][0]
             except Exception as e:
                 rs_conn.rollback()
-                LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['schema']['table_name'], query))
+                LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['braintree']['schema']['table_name'], query))
                 raise e
     rs_conn.close()
     return max_date_from_db
@@ -97,7 +97,9 @@ def process_transaction(transaction):
     t['transaction_processor'] = None
     t['settlement_batch_id'] = transaction.settlement_batch_id
     t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
-    t['user'] = None
+    t['shipping_country_name'] = transaction.shipping_details.country_name
+    t['shipping_postal_code'] = transaction.shipping_details.postal_code
+    t['shipping_region'] = transaction.shipping_details.region
 
 
     #status timestamps here
@@ -105,11 +107,11 @@ def process_transaction(transaction):
         if status_event.status == "submitted_for_settlement":
             t['submitted_for_settlement_date'] = status_event.timestamp
             t['amount_submitted_for_settlement'] = status_event.amount
+            t['user'] = status_event.user
         elif status_event.status == "settled":
             t['settlement_date'] = status_event.timestamp
         elif status_event.status == "authorized":
             t['amount_authorized'] = status_event.amount
-            t['user'] = status_event.user
 
     #card type here
     if (transaction.payment_instrument_type == 'amex_express_checkout_card'):
@@ -178,6 +180,8 @@ def process_search_results(search_results,braintree_connection):
                     LOG.error("Error Processing transaction %s" % transaction)
 
         count = count + 1
+        if (count > 5):
+            break
     return search_results_processed
 
 def write_to_file(config,file_path,batchTimestamp,search_results_processed,fieldnames):
@@ -185,31 +189,31 @@ def write_to_file(config,file_path,batchTimestamp,search_results_processed,field
         csv_writer = csv.writer(tempfile, dialect=format)#, fieldnames=fieldnames )
         csv_writer.writerow(",".join(fieldnames))
         for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],batchTimestamp])
+            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],r['shipping_country_name'],r['shipping_postal_code'],r['shipping_region'],batchTimestamp])
     LOG.info("Wrote to  temp file %s" % file_path)
 
 def write_file_and_upload_to_s3(config,search_results_processed,fieldnames):
     batchTimestamp = datetime.now()
-    file_path = os.path.join(config.get('PG_DUMP_TEMP_DIR'), str(batchTimestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))) + '.gz'
-    s3_key_name = os.path.join(config['S3']['UPLOAD_DIR'],batchTimestamp.strftime('%Y-%m-%d/%H_%M_%S.%f')) + '.gz'
+    file_path = os.path.join(config['braintree']['FILE_DUMP_TEMP_DIR'], str(batchTimestamp.strftime('%Y-%m-%d_%H_%M_%S.%f'))) + '.gz'
+    s3_key_name = os.path.join(config['braintree']['S3']['UPLOAD_DIR'],batchTimestamp.strftime('%Y-%m-%d/%H_%M_%S.%f')) + '.gz'
     write_to_file(config,file_path,batchTimestamp,search_results_processed,fieldnames)
     s3conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
-    utils.s3_upload(s3conn, config['S3']['BUCKET'], s3_key_name, file_path)
+    utils.s3_upload(s3conn, config['braintree']['S3']['BUCKET'], s3_key_name, file_path)
     os.remove(file_path)
     return s3_key_name
 
 def copy_into_redshift(config, s3_key, fieldnames):
-    db_config = config['braintree']['database']
+    db_config = config['redshift']
     with psycopg2.connect(dbname=db_config["database"], user=db_config["user"], host=db_config["host"],port=db_config["port"],password=db_config["password"] ) as rs_conn:
         LOG.info("redshift connected to host %s with user %s" % (db_config["host"],db_config["user"]))
-        LOG.info("copying to %s.%s" % (config['schema']['schema_name'],config['schema']['table_name']))
+        LOG.info("copying to %s.%s" % (config['braintree']['schema']['schema_name'],config['braintree']['schema']['table_name']))
         with rs_conn.cursor() as rs_cur:
             query_template = "COPY %s.%s (%s)    FROM 's3://%s/%s' credentials 'aws_access_key_id=%s;aws_secret_access_key=%s' CSV DELIMITER ',' TIMEFORMAT 'YYYY-MM-DD HH:MI:SS' IGNOREBLANKLINES IGNOREHEADER 1 TRUNCATECOLUMNS GZIP"
             query = query_template % (
-                    config['schema']['schema_name'],
-                    config['schema']['table_name'],
+                    config['braintree']['schema']['schema_name'],
+                    config['braintree']['schema']['table_name'],
                     ",".join(fieldnames),
-                    config['S3']['BUCKET'],
+                    config['braintree']['S3']['BUCKET'],
                     s3_key,
                     config['AWS']['ACCESSKEY'],
                     config['AWS']['SECRETKEY'])
@@ -218,30 +222,27 @@ def copy_into_redshift(config, s3_key, fieldnames):
                 rs_conn.commit()
             except Exception as e:
                 rs_conn.rollback()
-                LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['schema']['table_name'], query))
+                LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['braintree']['schema']['table_name'], query))
                 raise e
     rs_conn.close()
 
 def get_data():
     LOG.info('App started')
     APP_HOME = os.environ['APP_HOME']
-    LOG.info("APP_HOME:"+APP_HOME)
     APP_ENV = os.environ['APP_ENV']
-    LOG.info("APP_ENV:"+APP_ENV)
     SECRET_PATH = os.environ['SECRET_PATH']
-    LOG.info("SECRET_PATH:"+SECRET_PATH)
     secret_file_path = SECRET_PATH+"secrets."+APP_ENV+".json"
-    config_file_path = APP_HOME+"src/config/config-braintree."+APP_ENV+".json"
-    #secret_file_path = "secrets/secrets.prod.json"
-    #config_file_path = "config/config-braintree.prod.json"
+    config_file_path = APP_HOME+"src/config/config."+APP_ENV+".json"
 
     config = utils.load_config( secret_file_path,config_file_path )
-    LOG.info("loaded config with database host:%s and user:%s" % (config['braintree']['database']['host'],config['braintree']['database']['user']))
+    LOG.info("loaded config %s " % (config))
+    LOG.info("loaded config with database host:%s and user:%s" % (config['redshift']['host'],config['redshift']['user']))
 
     fieldnames = ['transaction_id' ,'transaction_type','transaction_status','created_datetime_utc','submitted_for_settlement_date_utc',
     'settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee',
     'tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type',
-    'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','"user"','date_uploaded_at']
+    'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','"user"',
+    'shipping_country_name','shipping_postal_code','shipping_region','date_uploaded_at']
 
 
     last_updated_date = get_last_updated(config)

@@ -11,6 +11,15 @@ API call limits
 * Create table in database if does not exist
 * Start app using python3 `python3 braintree/braintree_report.py`
 
+### Running as docker Containter
+* Add following at the end of Dockerfile
+  * `ENV APP_ENV staging`
+  * `CMD [ "python3" , "/srv/app/src/braintree/braintree_report.py" ]`
+* create secrets.staging.json and config.staging.json based on template
+*  cd to `external-data-importer`
+* run `docker build -t braintree .`
+* run ` docker run braintree`
+
 
 ### Create table
 ```
@@ -41,6 +50,9 @@ processor VARCHAR (64),
 settlement_batch_id VARCHAR (64),
 settlement_batch_date VARCHAR(32),
 "user" VARCHAR (64),
+shipping_country_name VARCHAR (64),
+shipping_postal_code VARCHAR(32),
+shipping_region VARCHAR(32),
 date_uploaded_at timestamp
 )
 distkey(settlement_date_utc)

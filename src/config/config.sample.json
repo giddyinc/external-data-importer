@@ -1,0 +1,33 @@
+{
+    "redshift":{
+        "host":"...",
+        "port":0,
+        "database":"..."
+    },
+    "braintree":{
+        "S3": {
+            "BUCKET":  ".....",
+            "UPLOAD_DIR": "..."
+        },
+        "schema": {
+            "schema_name":"...",
+            "table_name": "..."
+        },
+        "FILE_DUMP_TEMP_DIR": "..."
+    },
+    "ups":{
+        "FILE_DUMP_TEMP_DIR": "....",
+        "ftp":{
+            "archive_folder":"..."
+        },
+        "S3": {
+            "BUCKET":  ".....",
+            "UPLOAD_DIR": "...."
+        },
+        "schema": {
+            "schema_name":"...",
+            "weekly_table_name": "....",
+            "daily_table_name": "...."
+        }
+    }
+}
