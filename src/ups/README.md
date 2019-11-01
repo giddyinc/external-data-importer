@@ -16,7 +16,8 @@ Data Transformation
 ###Running as docker Containter
 * Add following at the end of Dockerfile
 `ENV APP_ENV staging`
-`CMD ['python3',"/srv/app/src/ups/ups_report.py"]`
+`CMD [ "python3" , "/srv/app/src/ups/ups_report.py" ]`
 * create secrets.staging.json and config.staging.json based on template
+*  cd to `external-data-importer`
 * run `docker build -t ups .`
 * run ` docker run ups`

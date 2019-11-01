@@ -11,6 +11,15 @@ API call limits
 * Create table in database if does not exist
 * Start app using python3 `python3 braintree/braintree_report.py`
 
+###Running as docker Containter
+* Add following at the end of Dockerfile
+`ENV APP_ENV staging`
+`CMD [ "python3" , "/srv/app/src/braintree/braintree_report.py" ]`
+* create secrets.staging.json and config.staging.json based on template
+*  cd to `external-data-importer`
+* run `docker build -t braintree .`
+* run ` docker run braintree`
+
 
 ### Create table
 ```
