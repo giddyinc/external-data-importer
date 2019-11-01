@@ -74,6 +74,8 @@ def get_data():
             ftp.rename(file, ftp_archive_folder_path+file)
             os.remove(local_filepath)
             LOG.info("Moved file - %s from ftp to s3 bucket %s at %s" % (file, config["ups"]['S3']['BUCKET'],s3_key_name ))
+        else:
+            LOG.info("Unexpected file type %s found on FTP server" % (file))
     close_ftp_connection(ftp)
 
 if __name__=="__main__":
