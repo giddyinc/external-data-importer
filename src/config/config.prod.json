@@ -1,0 +1,33 @@
+{
+    "redshift":{
+        "host":"pensieve-prod-5-vpc.cmitoh9ob6og.us-east-1.redshift.amazonaws.com",
+        "port":5439,
+        "database":"pensieve"
+    },
+    "braintree":{
+        "S3": {
+            "BUCKET":  "boxed-pensieve-s3-redshift",
+            "UPLOAD_DIR": "braintree/prod"
+        },
+        "schema": {
+            "schema_name":"externalsources",
+            "table_name": "braintree_settlements"
+        },
+        "FILE_DUMP_TEMP_DIR": "/srv/app/temp/braintree/prod"
+    },
+    "ups":{
+        "FILE_DUMP_TEMP_DIR": "/srv/app/temp/ups/prod/",
+        "ftp":{
+            "archive_folder":"archive/"
+        },
+        "S3": {
+            "BUCKET":  "boxed-pensieve-s3-redshift",
+            "UPLOAD_DIR": "ups/test"
+        },
+        "schema": {
+            "schema_name":"externalsources",
+            "weekly_table_name": "weekly_table",
+            "daily_table_name": "daily_table"
+        }
+    }
+}

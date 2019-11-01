@@ -10,3 +10,5 @@ ENV SECRET_PATH $APP_HOME/src/secrets/
 RUN mkdir /srv/app/temp
 RUN mkdir /srv/app/temp/braintree
 RUN mkdir /srv/app/temp/braintree/prod/
+RUN mkdir /srv/app/temp/ups
+RUN mkdir /srv/app/temp/ups/prod/
