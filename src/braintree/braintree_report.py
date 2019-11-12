@@ -138,7 +138,7 @@ def process_transaction(transaction):
         t['transaction_card_type'] = None
     elif (transaction.payment_instrument_type == "venmo_account"):
         t['transaction_card_type'] = None
-        t['source'] = transaction.venmo_account.source_description
+        t['source'] = transaction.venmo_account['source_description']
     elif (transaction.payment_instrument_type == "visa_checkout_card"):
         t['transaction_card_type'] = transaction.visa_checkout_card_details.card_type
     else:
