@@ -100,6 +100,8 @@ def process_transaction(transaction):
     t['shipping_country_name'] = transaction.shipping_details.country_name
     t['shipping_postal_code'] = transaction.shipping_details.postal_code
     t['shipping_region'] = transaction.shipping_details.region
+    t['billing_region'] = transaction.billing_details.region
+    t['source'] = None
 
 
     #status timestamps here
@@ -118,8 +120,10 @@ def process_transaction(transaction):
         t['transaction_card_type'] = transaction.amex_express_checkout_card_details.card_type
     elif (transaction.payment_instrument_type == "android_pay_card"):
         t['transaction_card_type'] = transaction.android_pay_card_details.source_card_type
+        t['source'] = transaction.android_pay_card_details.source_description
     elif (transaction.payment_instrument_type ==  "apple_pay_card"):
         t['transaction_card_type'] = transaction.apple_pay_details.card_type
+        t['source'] = transaction.apple_pay_details.source_description
     elif (transaction.payment_instrument_type == "credit_card"):
         t['transaction_card_type'] = transaction.credit_card_details.card_type
     elif (transaction.payment_instrument_type == "masterpass_card"):
@@ -134,6 +138,7 @@ def process_transaction(transaction):
         t['transaction_card_type'] = None
     elif (transaction.payment_instrument_type == "venmo_account"):
         t['transaction_card_type'] = None
+        t['source'] = transaction.venmo_account.source_description
     elif (transaction.payment_instrument_type == "visa_checkout_card"):
         t['transaction_card_type'] = transaction.visa_checkout_card_details.card_type
     else:
@@ -180,8 +185,8 @@ def process_search_results(search_results,braintree_connection):
                     LOG.error("Error Processing transaction %s" % transaction)
 
         count = count + 1
-        if (count > 5):
-            break
+        #if (count > 5):
+        #    break
     return search_results_processed
 
 def write_to_file(config,file_path,batchTimestamp,search_results_processed,fieldnames):
@@ -189,7 +194,7 @@ def write_to_file(config,file_path,batchTimestamp,search_results_processed,field
         csv_writer = csv.writer(tempfile, dialect=format)#, fieldnames=fieldnames )
         csv_writer.writerow(",".join(fieldnames))
         for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],r['shipping_country_name'],r['shipping_postal_code'],r['shipping_region'],batchTimestamp])
+            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],r['shipping_country_name'],r['shipping_postal_code'],r['shipping_region'],r['billing_region'],r['source'],batchTimestamp])
     LOG.info("Wrote to  temp file %s" % file_path)
 
 def write_file_and_upload_to_s3(config,search_results_processed,fieldnames):
@@ -241,7 +246,7 @@ def get_data():
     'settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee',
     'tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type',
     'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','"user"',
-    'shipping_country_name','shipping_postal_code','shipping_region','date_uploaded_at']
+    'shipping_country_name','shipping_postal_code','shipping_region','billing_region','source','date_uploaded_at']
 
 
     last_updated_date = get_last_updated(config)
