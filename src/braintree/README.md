@@ -53,8 +53,15 @@ settlement_batch_date VARCHAR(32),
 shipping_country_name VARCHAR (64),
 shipping_postal_code VARCHAR(32),
 shipping_region VARCHAR(32),
+billing_region  VARCHAR(32),
+source  VARCHAR(32),
 date_uploaded_at timestamp
 )
 distkey(settlement_date_utc)
 ;
+```
+
+```
+ALTER TABLE externalsources.test_braintree_settlements ADD COLUMN billing_region  VARCHAR(32);
+ALTER TABLE externalsources.test_braintree_settlements ADD COLUMN source  VARCHAR(32);
 ```
