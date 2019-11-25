@@ -102,6 +102,7 @@ def process_transaction(transaction):
     t['shipping_region'] = transaction.shipping_details.region
     t['billing_region'] = transaction.billing_details.region
     t['source'] = None
+    t['user'] = None
 
 
     #status timestamps here
@@ -110,6 +111,8 @@ def process_transaction(transaction):
             t['submitted_for_settlement_date'] = status_event.timestamp
             t['amount_submitted_for_settlement'] = status_event.amount
             t['user'] = status_event.user
+            if('user' in dir(status_event)):
+                t['user'] = status_event.user
         elif status_event.status == "settled":
             t['settlement_date'] = status_event.timestamp
         elif status_event.status == "authorized":
@@ -183,6 +186,7 @@ def process_search_results(search_results,braintree_connection):
                 except Exception as e:
                     LOG.error(str(e))
                     LOG.error("Error Processing transaction %s" % transaction)
+                    raise(e)
 
         count = count + 1
         #if (count > 5):
