@@ -61,7 +61,3 @@ distkey(settlement_date_utc)
 ;
 ```
 
-```
-ALTER TABLE externalsources.test_braintree_settlements ADD COLUMN billing_region  VARCHAR(32);
-ALTER TABLE externalsources.test_braintree_settlements ADD COLUMN source  VARCHAR(32);
-```
