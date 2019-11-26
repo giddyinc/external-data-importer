@@ -21,3 +21,51 @@ The code will run as an airflow job - details here
 *  cd to `external-data-importer`
 * run `docker build -t ups .`
 * run ` docker run ups`
+
+
+### Create table
+```
+create table externalsources.weekly_table(
+payer_account  VARCHAR (128),
+invoice_date VARCHAR (128),
+invoice_num VARCHAR (128),
+invoice_amt VARCHAR (128),
+transaction_date VARCHAR (128),
+ship_ref_num1 VARCHAR (128),
+ship_ref_num2 VARCHAR (128),
+bill_option_code VARCHAR (128),
+pkg_quantity VARCHAR (128),
+tracking_num VARCHAR (128),
+entered_weight VARCHAR (128),
+billed_weight VARCHAR (128),
+container_type VARCHAR (128),
+pkg_dimension VARCHAR (128),
+zone VARCHAR (128),
+charge_category_code VARCHAR (128),
+charge_category_detail_code VARCHAR (128),
+charge_class_code VARCHAR (128),
+charge_desc_code VARCHAR (128),
+charge_desc VARCHAR (128),
+incentive_amt VARCHAR (128),
+net_amt VARCHAR (128),
+sender_name VARCHAR (128),
+sender_company VARCHAR (128),
+sender_add1 VARCHAR (128),
+sender_add2 VARCHAR (128),
+sender_city VARCHAR (128),
+sender_state VARCHAR (128),
+sender_postal VARCHAR (128),
+sender_country_or_territory VARCHAR (128),
+receiver_name VARCHAR (128),
+receiver_company VARCHAR (128),
+receiver_add1 VARCHAR (128),
+receiver_add2 VARCHAR (128),
+receiver_city VARCHAR (128),
+receiver_state VARCHAR (128),
+receiver_postal VARCHAR (128),
+receiver_country_or_territory VARCHAR (128),
+type VARCHAR (128),
+return_type VARCHAR (128),
+date_uploaded_at timestamp
+);
+```
