@@ -22,12 +22,60 @@
         },
         "S3": {
             "BUCKET":  "boxed-pensieve-s3-redshift",
-            "UPLOAD_DIR": "ups/test"
+            "UPLOAD_DIR": "ups/raw",
+            "COPY_DIR": "ups/copy/"
         },
         "schema": {
             "schema_name":"externalsources",
             "weekly_table_name": "weekly_table",
             "daily_table_name": "daily_table"
-        }
+        },
+        "required_file_cols" :[
+            "payer_account",
+            "invoice_date",
+            "invoice_num",
+            "invoice_amt",
+            "transaction_date",
+            "ship_ref_num1",
+            "ship_ref_num2",
+            "bill_option_code",
+            "pkg_quantity",
+            "tracking_num",
+            "entered_weight",
+            "billed_weight",
+            "container_type",
+            "pkg_dimension",
+            "zone",
+            "charge_category_code",
+            "charge_category_detail_code",
+            "charge_class_code",
+            "charge_desc_code",
+            "charge_desc",
+            "incentive_amt",
+            "net_amt",
+            "sender_name",
+            "sender_company",
+            "sender_add1",
+            "sender_add2",
+            "sender_city",
+            "sender_state",
+            "sender_postal",
+            "sender_country_or_territory",
+            "receiver_name",
+            "receiver_company",
+            "receiver_add1",
+            "receiver_add2",
+            "receiver_city",
+            "receiver_state",
+            "receiver_postal",
+            "receiver_country_or_territory"
+        ],
+        "merge_file_columns":[
+            "type",
+            "return_type"
+        ],
+        "meta_columns":[
+            "date_uploaded_at"
+        ]
     }
 }
