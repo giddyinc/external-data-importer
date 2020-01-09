@@ -22,13 +22,11 @@
         },
         "S3": {
             "BUCKET":  "boxed-pensieve-s3-redshift",
-            "UPLOAD_DIR": "ups/raw",
-            "COPY_DIR": "ups/copy/"
+            "UPLOAD_DIR": "ups/finished_processing/"
         },
         "schema": {
             "schema_name":"externalsources",
-            "weekly_table_name": "weekly_table",
-            "daily_table_name": "daily_table"
+            "weekly_table_name": "weekly_table_backfill"
         },
         "required_file_cols" :[
             "payer_account",
