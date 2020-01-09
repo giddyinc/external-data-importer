@@ -1,12 +1,3 @@
-#csv reader reads the file line by line
-#first line matches required columns to file columns and makes an order
-#if any columns are missing throw an error
-
-#create table for UPS types
-
-#File = ubd_spk_wky_boxed -- UBD_SPK_WKY_BOXED_20191006_20191012_UBD.CSV
-# table =  external_sources.ups_invoices
-
 import os
 import sys
 import logging
@@ -72,8 +63,8 @@ required_cols = [
                 ]
 
 
-def process_file(local_path,file,s3_path):
-    df = pd.read_csv(local_path+file, low_memory=False)
+def process_file(local_path,file_raw,file_processed,s3_path):
+    df = pd.read_csv(local_path+file_raw, low_memory=False)
     current_columns = df.columns.tolist()
     new_columns = [make_snake_case(i)  for i in current_columns]
     df.columns = new_columns
@@ -81,15 +72,17 @@ def process_file(local_path,file,s3_path):
     #drop extra header row
     df = df.drop(0)
     df = df[required_cols]
+    LOG.info("created data frame")
+    #df['receiver_postal'] = df['receiver_postal'].astype(str)
+    #df['receiver_postal-trunc'] = df['receiver_postal'].str.slice[:5]
 
-    desc_csv = pd.read_csv('s3://boxed-pensieve-s3-redshift/ups/test/ups_conversion/Charge_Descriptions_Key.csv')
+    #df['sender_postal'] = df['sender_postal'].str[:5]
+
+    desc_csv = pd.read_csv('s3://boxed-pensieve-s3-redshift/ups/ups_conversion/Charge_Descriptions_Key.csv')
     final_df = df.merge(desc_csv,on='charge_desc')
     LOG.info("merged new file")
 
     final_df['date_uploaded_at'] = datetime.now()
-    final_df.to_csv(s3_path+file, index=False)
+    final_df.to_csv(s3_path+file_processed, index=False)
     LOG.info("uploaded new file to S3")
-
-    #upload file to S3
-    # copy to redshift
 
