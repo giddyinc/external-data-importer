@@ -35,11 +35,11 @@ def get_s3_files_list(s3_conn,bucket,prefix):
 
 def download_file_from_s3(s3_conn,bucket,prefix, filename, filepath):
     s3_conn.download_file(bucket, prefix+filename, filepath)
-    LOG.info("download_file_from_s3 %s / %s" % (bucket, prefix+filename))
+    #LOG.info("download_file_from_s3 %s / %s" % (bucket, prefix+filename))
 
 def upload_file_to_s3(s3_conn,bucket,prefix, filename, source_file):
     s3_conn.upload_file(source_file,bucket,prefix+filename)
-    LOG.info("upload_file_to_s3 %s / %s" % (bucket, prefix+filename))
+    #LOG.info("upload_file_to_s3 %s / %s" % (bucket, prefix+filename))
 
 def copy_into_redshift(config, s3_key, fieldnames):
     db_config = config['redshift']
@@ -98,9 +98,9 @@ def get_data():
     os.environ["AWS_SECRET_ACCESS_KEY"] = config['AWS']['SECRETKEY']
 
     bucket = config["ups"]['S3']['BUCKET']
-    s3_copy_folder = config['ups']['S3']['COPY_DIR']
     prefix = "ups/collected_initial/"
     final_prefix = config['ups']['S3']['UPLOAD_DIR']
+    merge_csv_path = 's3://boxed-pensieve-s3-redshift/ups/ups_conversion/Charge_Descriptions_Key.csv'
 
     fieldnames = config['ups']["required_file_cols"]
     fieldnames.extend(config['ups']["merge_file_columns"])
@@ -123,7 +123,7 @@ def get_data():
         elif(file.startswith('UBD_SPK_WKY_BOXED')):
             download_file_from_s3(s3_conn,bucket,prefix, file, filepath)
             upload_file_to_s3(s3_conn,bucket,final_prefix+"UPS_WEEKLY/", file, filepath)
-            process_file.process_file(local_path,file,file+"_processed","s3://%s/%sUPS_WEEKLY/" % (bucket,final_prefix))
+            process_file.process_file(local_path,file,file+"_processed","s3://%s/%sUPS_WEEKLY/" % (bucket,final_prefix), merge_csv_path)
             copy_into_redshift(config, final_prefix+"UPS_WEEKLY/"+file+"_processed", fieldnames)
             os.remove(filepath)
         else:
