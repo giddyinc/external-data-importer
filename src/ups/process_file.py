@@ -63,8 +63,8 @@ required_cols = [
                 ]
 
 
-def process_file(local_path,file_raw,file_processed,s3_path):
-    df = pd.read_csv(local_path+file_raw, low_memory=False)
+def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
+    df = pd.read_csv(local_path+file_raw, dtype=str,low_memory=False)
     current_columns = df.columns.tolist()
     new_columns = [make_snake_case(i)  for i in current_columns]
     df.columns = new_columns
@@ -72,17 +72,14 @@ def process_file(local_path,file_raw,file_processed,s3_path):
     #drop extra header row
     df = df.drop(0)
     df = df[required_cols]
-    LOG.info("created data frame")
-    #df['receiver_postal'] = df['receiver_postal'].astype(str)
-    #df['receiver_postal-trunc'] = df['receiver_postal'].str.slice[:5]
+    df['receiver_postal'] = df.apply(lambda row: str(row['receiver_postal'])[:5], axis=1)
+    df['sender_postal'] = df.apply(lambda row: str(row['sender_postal'])[:5], axis=1)
 
-    #df['sender_postal'] = df['sender_postal'].str[:5]
-
-    desc_csv = pd.read_csv('s3://boxed-pensieve-s3-redshift/ups/ups_conversion/Charge_Descriptions_Key.csv')
+    desc_csv = pd.read_csv(csv_path)
     final_df = df.merge(desc_csv,on='charge_desc')
-    LOG.info("merged new file")
+    #LOG.info("merged new file")
 
     final_df['date_uploaded_at'] = datetime.now()
     final_df.to_csv(s3_path+file_processed, index=False)
-    LOG.info("uploaded new file to S3")
+    #LOG.info("uploaded new file to S3")
 
