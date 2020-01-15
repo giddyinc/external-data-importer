@@ -29,11 +29,14 @@ def get_files_list(ftp):
     files = ftp.nlst()
     return files
 
-def download_file(ftp, ftp_path, ftp_filename, filepath):
+def download_file_from_ftp(ftp, ftp_path, ftp_filename, filepath):
     localfile = open(filepath, 'wb')
     ftp.cwd(ftp_path)
     ftp.retrbinary('RETR ' + ftp_filename, localfile.write, 1024)
     localfile.close()
+
+def move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path):
+    ftp.rename(file, ftp_archive_folder_path+file)
 
 def get_current_ftp_directory_path(ftp):
     ftp_path = ftp.pwd()
@@ -44,16 +47,6 @@ def close_ftp_connection(ftp):
         ftp.quit()
     except Exception as e:
         ftp.close()
-
-def move_file_to_s3(local_path,file,ftp, ftp_path,ftp_archive_folder_path,config):
-    local_filepath = local_path+file
-    download_file(ftp, ftp_path, file, local_filepath)
-    s3_key_name = os.path.join(config["ups"]['S3']['UPLOAD_DIR'],file)
-    s3_conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
-    utils.s3_upload(s3_conn, config["ups"]['S3']['BUCKET'], s3_key_name, local_filepath)
-    ftp.rename(file, ftp_archive_folder_path+file)
-    LOG.info("Moved file - %s from ftp to s3 bucket %s at %s" % (file, config["ups"]['S3']['BUCKET'],s3_key_name ))
-
 
 def copy_into_redshift(config, s3_key, fieldnames):
     db_config = config['redshift']
@@ -108,22 +101,32 @@ def get_data():
         LOG.info("No new files found")
 
     s3_bucket = config['ups']['S3']['BUCKET']
-    s3_copy_folder = config['ups']['S3']['COPY_DIR']
+    s3_copy_folder = config['ups']['S3']['UPLOAD_DIR']
     fieldnames = config['ups']["required_file_cols"]
     fieldnames.extend(config['ups']["merge_file_columns"])
     fieldnames.extend(config['ups']["meta_columns"])
+    merge_csv_path = config['ups']['merge_csv_path']
+
     for file in files:
+        LOG.info("-------------  processing file %s ----------------------------" % file)
+        local_file_path = local_path+file
+        s3_conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
+
         if(file.startswith('QVD_OUT_BOXED')):
-            move_file_to_s3(local_path,file,ftp, ftp_path,ftp_archive_folder_path,config)
+            download_file_from_ftp(ftp, ftp_path, file,local_file_path )
+            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+"QVD/", file, local_file_path)
+            move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
+            os.remove(local_file_path)
         elif(file.startswith('UBD_SPK_WKY_BOXED')):
-            move_file_to_s3(local_path,file,ftp, ftp_path,ftp_archive_folder_path,config)
-            process_file.process_file(local_path,file,"s3://%s/%s" % (s3_bucket,s3_copy_folder))
-            
-            copy_into_redshift(config, s3_copy_folder+file, fieldnames)
-            #os.remove(local_filepath)
+            download_file_from_ftp(ftp, ftp_path, file,local_file_path )
+            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+"UPS_WEEKLY/", file, local_file_path)
+            process_file.process_file(local_path,file,file+"_processed","s3://%s/%sUPS_WEEKLY/" % (s3_bucket,s3_copy_folder), merge_csv_path)
+            copy_into_redshift(config, s3_copy_folder+"UPS_WEEKLY/"+file+"_processed", fieldnames)
+            move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
+            os.remove(local_file_path)
         else:
             LOG.info("Unexpected file type %s found on FTP server" % (file))
-        LOG.info("-------------  processed file ----------------------------")
+        LOG.info("-------------  processed file %s ----------------------------" % file)
     close_ftp_connection(ftp)
 
 if __name__=="__main__":
