@@ -76,7 +76,7 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
 
     desc_csv = pd.read_csv(csv_path)
     final_df = df.merge(desc_csv,how='left',on='charge_desc')
-    #LOG.info("merged new file")
+    LOG.info("merged new file")
 
     final_df['date_uploaded_at'] = datetime.now()
     final_dataframe_rows = len(final_df)
@@ -84,5 +84,5 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
         raise Exception("We lost rows on merge for file %s" % file_raw)
 
     final_df.to_csv(s3_path+file_processed, index=False)
-    #LOG.info("uploaded new file to S3")
+    LOG.info("uploaded new file to S3")
 
