@@ -98,9 +98,9 @@ def get_data():
     os.environ["AWS_SECRET_ACCESS_KEY"] = config['AWS']['SECRETKEY']
 
     bucket = config["ups"]['S3']['BUCKET']
-    prefix = "ups/collected_initial/"
+    prefix = "ups/initial/"
     final_prefix = config['ups']['S3']['UPLOAD_DIR']
-    merge_csv_path = 's3://boxed-pensieve-s3-redshift/ups/ups_conversion/Charge_Descriptions_Key.csv'
+    merge_csv_path = 's3://boxed-pensieve-s3-redshift/ups/ups_conversion/desc_key.csv'
 
     fieldnames = config['ups']["required_file_cols"]
     fieldnames.extend(config['ups']["merge_file_columns"])
