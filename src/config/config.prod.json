@@ -17,6 +17,7 @@
     },
     "ups":{
         "FILE_DUMP_TEMP_DIR": "/srv/app/temp/ups/prod/",
+        "merge_csv_path" : "s3://boxed-pensieve-s3-redshift/ups/ups_conversion/desc_key.csv",
         "ftp":{
             "archive_folder":"archive/"
         },
@@ -26,7 +27,7 @@
         },
         "schema": {
             "schema_name":"externalsources",
-            "weekly_table_name": "weekly_table_backfill"
+            "weekly_table_name": "ups_weekly_invoices"
         },
         "required_file_cols" :[
             "payer_account",
