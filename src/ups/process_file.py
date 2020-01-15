@@ -64,17 +64,23 @@ required_cols = [
 
 
 def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
+    LOG.info("start pandas processing")
     df = pd.read_csv(local_path+file_raw, dtype=str,low_memory=False)
+    LOG.info("make dataframe")
     current_columns = df.columns.tolist()
     new_columns = [make_snake_case(i)  for i in current_columns]
     df.columns = new_columns
+    LOG.info("change column names")
 
     initial_dataframe_rows = len(df)
     df = df[required_cols]
+    LOG.info("remove extra columns")
     df['receiver_postal'] = df.apply(lambda row: str(row['receiver_postal'])[:5], axis=1)
     df['sender_postal'] = df.apply(lambda row: str(row['sender_postal'])[:5], axis=1)
+    LOG.info("fix postal codes")
 
     desc_csv = pd.read_csv(csv_path)
+    LOG.info("read desc csv")
     final_df = df.merge(desc_csv,how='left',on='charge_desc')
     LOG.info("merged new file")
 
