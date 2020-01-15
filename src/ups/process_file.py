@@ -69,17 +69,20 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
     new_columns = [make_snake_case(i)  for i in current_columns]
     df.columns = new_columns
 
-    #drop extra header row
-    df = df.drop(0)
+    initial_dataframe_rows = len(df)
     df = df[required_cols]
     df['receiver_postal'] = df.apply(lambda row: str(row['receiver_postal'])[:5], axis=1)
     df['sender_postal'] = df.apply(lambda row: str(row['sender_postal'])[:5], axis=1)
 
     desc_csv = pd.read_csv(csv_path)
-    final_df = df.merge(desc_csv,on='charge_desc')
+    final_df = df.merge(desc_csv,how='left',on='charge_desc')
     #LOG.info("merged new file")
 
     final_df['date_uploaded_at'] = datetime.now()
+    final_dataframe_rows = len(final_df)
+    if(initial_dataframe_rows != final_dataframe_rows):
+        raise Exception("We lost rows on merge for file %s" % file_raw)
+
     final_df.to_csv(s3_path+file_processed, index=False)
     #LOG.info("uploaded new file to S3")
 
