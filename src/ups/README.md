@@ -3,9 +3,7 @@ This is based off jira ticket [DATA-216](https://giddyinc.atlassian.net/browse/D
 
 The code will run as an airflow job - details here
 ### TODO
-* Encryption on files
-* Table Structure
-* Data Transformation
+* Encryption on files - not going to happen
 
 ### Setting up environment
 * Install dependencies using `pip requirements.txt`
