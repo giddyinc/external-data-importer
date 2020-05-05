@@ -4,3 +4,4 @@ boto
 python-dateutil
 pandas
 s3fs
+boto3

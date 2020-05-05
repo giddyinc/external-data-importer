@@ -65,7 +65,7 @@ required_cols = [
 
 def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
     LOG.info("start pandas processing")
-    df = pd.read_csv(local_path+file_raw, dtype=str,low_memory=False)
+    df = pd.read_csv(local_path+file_raw, dtype=str,low_memory=False, verbose = True)
     LOG.info("make dataframe")
     current_columns = df.columns.tolist()
     new_columns = [make_snake_case(i)  for i in current_columns]
