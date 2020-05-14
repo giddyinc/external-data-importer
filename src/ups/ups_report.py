@@ -96,6 +96,7 @@ def get_data():
 
     files = get_files_list(ftp)
     LOG.info("number of files found %s " % len(files))
+    close_ftp_connection(ftp)
 
     if(len(files) < 2):
         LOG.info("No new files found")
@@ -109,6 +110,7 @@ def get_data():
 
     for file in files:
         LOG.info("-------------  processing file %s ----------------------------" % file)
+        ftp = get_ftp_connection(config["ups"]["ftp"])
         local_file_path = local_path+file
         s3_conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
 
@@ -131,8 +133,8 @@ def get_data():
             os.remove(local_file_path)
         else:
             LOG.info("Unexpected file type %s found on FTP server" % (file))
+        close_ftp_connection(ftp)
         LOG.info("-------------  processed file %s ----------------------------" % file)
-    close_ftp_connection(ftp)
 
 if __name__=="__main__":
     get_data()
