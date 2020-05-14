@@ -114,15 +114,17 @@ def get_data():
 
         if(file.startswith('QVD_OUT_BOXED')):
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
-            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+"QVD/", file, local_file_path)
+            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+config['ups']['S3']['QVD_RAW']+"/", file, local_file_path)
             move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
             os.remove(local_file_path)
         elif(file.startswith('UBD_SPK_WKY_BOXED')):
+            ups_raw = config['ups']['S3']['UPS_WEEKLY_RAW']
+            ups_processed = config['ups']['S3']['UPS_WEEKLY_PROCESSED']
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
-            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+"UPS_WEEKLY/", file, local_file_path)
-            process_file.process_file(local_path,file,file+"_processed","s3://%s/%sUPS_WEEKLY/" % (s3_bucket,s3_copy_folder), merge_csv_path)
+            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+ups_raw+"/", file, local_file_path)
+            process_file.process_file(local_path,file,file+"_processed","s3://%s/%s%s/" % (s3_bucket,s3_copy_folder,ups_processed), merge_csv_path)
             LOG.info("processed_file")
-            copy_into_redshift(config, s3_copy_folder+"UPS_WEEKLY/"+file+"_processed", fieldnames)
+            copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+file+"_processed" , fieldnames)
             LOG.info("uploaded to redshift")
             move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
             LOG.info("move ftp file to archive")
