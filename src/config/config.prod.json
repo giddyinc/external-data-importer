@@ -23,7 +23,10 @@
         },
         "S3": {
             "BUCKET":  "boxed-pensieve-s3-redshift",
-            "UPLOAD_DIR": "ups/finished_processing/"
+            "UPLOAD_DIR": "ups/finished_processing/",
+            "QVD_RAW":"QVD",
+            "UPS_WEEKLY_RAW":"UPS_WEEKLY/raw",
+            "UPS_WEEKLY_PROCESSED":"UPS_WEEKLY/processed"
         },
         "schema": {
             "schema_name":"externalsources",

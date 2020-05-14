@@ -22,7 +22,10 @@
         },
         "S3": {
             "BUCKET":  ".....",
-            "UPLOAD_DIR": "...."
+            "UPLOAD_DIR": "....",
+            "QVD_RAW":"...",
+            "UPS_WEEKLY_RAW":"....",
+            "UPS_WEEKLY_PROCESSED":"...."
         },
         "schema": {
             "schema_name":"...",
