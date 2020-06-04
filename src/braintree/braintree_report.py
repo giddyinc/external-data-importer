@@ -129,8 +129,7 @@ def process_transaction(transaction):
         if status_event.status == "submitted_for_settlement":
             t['submitted_for_settlement_date'] = status_event.timestamp
             t['amount_submitted_for_settlement'] = status_event.amount
-            t['user'] = status_event.user
-            if('user' in dir(status_event)):
+            if hasattr('status_event', 'user'):
                 t['user'] = status_event.user
         elif status_event.status == "settled":
             t['settlement_date'] = status_event.timestamp
