@@ -10,6 +10,7 @@ import logging
 import utils
 import gzip
 import csv
+import requests
 
 
 LOG = logging.getLogger(__name__)
@@ -17,6 +18,23 @@ logging.basicConfig(level=logging.INFO, \
     format='%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s', \
     datefmt="%Y-%m-%d %H:%M:%S", \
     stream=sys.stdout)
+
+class SessionHttp(braintree.util.http.Http):
+    session = requests.Session()
+
+    def __init__(self, config, environment=None):
+        super(SessionHttp, self).__init__(config, environment)
+
+    def _Http__request_function(self, method):
+        if method == "GET":
+            return SessionHttp.session.get
+        elif method == "POST":
+            return SessionHttp.session.post
+        elif method == "PUT":
+            return SessionHttp.session.put
+        elif method == "DELETE":
+            return SessionHttp.session.delete
+
 
 def check_dupes(config):
     db_config = config['redshift']
@@ -54,6 +72,7 @@ def get_last_updated(config):
 def get_braintree_connection(braintree_config):
     braintree_connection = braintree.BraintreeGateway(
         braintree.Configuration(
+            http_strategy=SessionHttp,
             environment=braintree.Environment.Production,#braintree_config['environment'],
             merchant_id=braintree_config['merchant_id'],
             public_key=braintree_config['public_key'],
@@ -189,7 +208,7 @@ def process_search_results(search_results,braintree_connection):
                     raise(e)
 
         count = count + 1
-        #if (count > 5):
+        # if (count > 5):
         #    break
     return search_results_processed
 
