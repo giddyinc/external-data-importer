@@ -93,35 +93,42 @@ def get_search_results(braintree_connection,start,end):
 
 def process_transaction(transaction):
     t = {}
-    t['transaction_id'] = transaction.id
-    t['transaction_type'] = transaction.type
-    t['transaction_status'] = transaction.status
-    t['transaction_created_at'] = transaction.created_at
-    t['submitted_for_settlement_date'] = None
-    t['settlement_date'] = None
-    t['transaction_disbursement_date'] = transaction.disbursement_details.disbursement_date
-    t['transaction_merchant_account_id'] = transaction.merchant_account_id
-    t['amount_authorized'] = None
-    t['amount_submitted_for_settlement'] = None
-    t['transaction_service_fee_amount'] = transaction.service_fee_amount
-    t['transaction_tax_amount'] = transaction.tax_amount
-    t['transaction_tax_exempt'] = transaction.tax_exempt
-    t['transaction_purchase_order_number'] = transaction.purchase_order_number
-    t['transaction_order_id'] = transaction.order_id
+    t['transaction_id']                      = transaction.id
+    t['transaction_type']                    = transaction.type
+    t['transaction_status']                  = transaction.status
+    t['transaction_created_at']              = transaction.created_at
+    t['submitted_for_settlement_date']       = None
+    t['settlement_date']                     = None
+    t['transaction_disbursement_date']       = transaction.disbursement_details.disbursement_date
+    t['transaction_merchant_account_id']     = transaction.merchant_account_id
+    t['amount_authorized']                   = None
+    t['amount_submitted_for_settlement']     = None
+    t['transaction_service_fee_amount']      = transaction.service_fee_amount
+    t['transaction_tax_amount']              = transaction.tax_amount
+    t['transaction_tax_exempt']              = transaction.tax_exempt
+    t['transaction_purchase_order_number']   = transaction.purchase_order_number
+    t['transaction_order_id']                = transaction.order_id
     t['transaction_refunded_transaction_id'] = transaction.refunded_transaction_id
     t['transaction_payment_instrument_type'] = transaction.payment_instrument_type
-    t['transaction_customer_id'] = None
-    t['transaction_token'] = transaction.credit_card_details.token
-    t['transaction_customer_company'] = None
-    t['transaction_processor'] = None
-    t['settlement_batch_id'] = transaction.settlement_batch_id
-    t['settlement_batch_date'] = transaction.settlement_batch_id[:10]
-    t['shipping_country_name'] = transaction.shipping_details.country_name
-    t['shipping_postal_code'] = transaction.shipping_details.postal_code
-    t['shipping_region'] = transaction.shipping_details.region
-    t['billing_region'] = transaction.billing_details.region
-    t['source'] = None
-    t['user'] = None
+    t['transaction_customer_id']             = None
+    t['transaction_token']                   = None
+    t['transaction_customer_company']        = None
+    t['transaction_processor']               = None
+    t['settlement_batch_id']                 = transaction.settlement_batch_id
+    t['settlement_batch_date']               = transaction.settlement_batch_id[:10]
+    t['shipping_country_name']               = transaction.shipping_details.country_name
+    t['shipping_postal_code']                = transaction.shipping_details.postal_code
+    t['shipping_region']                     = transaction.shipping_details.region
+    t['billing_region']                      = transaction.billing_details.region
+    t['source']                              = None
+    t['user']                                = None
+    t['ach_accountholder_name']              = None
+    t['ach_bank_name']                       = None
+    t['ach_business_name']                   = None
+    t['ach_last4']                           = None
+    t['ach_routing_number']                  = None
+    t['ach_account_type']                    = None
+    t['ach_ownership_type']                  = None
 
 
     #status timestamps here
@@ -147,6 +154,7 @@ def process_transaction(transaction):
         t['source'] = transaction.apple_pay_details.source_description
     elif (transaction.payment_instrument_type == "credit_card"):
         t['transaction_card_type'] = transaction.credit_card_details.card_type
+        t['transaction_token']     = transaction.credit_card_details.token
     elif (transaction.payment_instrument_type == "masterpass_card"):
         t['transaction_card_type'] = transaction.masterpass_card_details.card_type
     elif (transaction.payment_instrument_type == "paypal_account"):
@@ -157,6 +165,15 @@ def process_transaction(transaction):
         t['transaction_card_type'] = transaction.samsung_pay_card_details.card_type
     elif (transaction.payment_instrument_type == "us_bank_account"):
         t['transaction_card_type'] = None
+        bank_account_info = transaction.us_bank_account
+        t['ach_accountholder_name'] = bank_account_info.account_holder_name
+        t['ach_bank_name']          = bank_account_info.bank_name
+        t['ach_business_name']      = bank_account_info.business_name
+        t['ach_last4']              = bank_account_info.last_4
+        t['ach_routing_number']     = bank_account_info.routing_number
+        t['ach_account_type']       = bank_account_info.account_type
+        t['ach_ownership_type']     = bank_account_info.ownership_type
+        t['transaction_token']      = bank_account_info.token
     elif (transaction.payment_instrument_type == "venmo_account"):
         t['transaction_card_type'] = None
         t['source'] = transaction.venmo_account['source_description']
@@ -170,6 +187,8 @@ def process_transaction(transaction):
          t['transaction_processor'] = "Paypal"
     elif (t['transaction_payment_instrument_type'] == "venmo_account"):
          t['transaction_processor'] = "Braintree"
+    elif (t['transaction_payment_instrument_type'] == "us_bank_account"):
+         t['transaction_processor'] = "USBankAccount"
     elif (t['transaction_card_type'] is not None):
         if (t['transaction_card_type'] == "Amex Express" or t['transaction_card_type'] == "American Express" or t['transaction_card_type'] == "Apple Pay - American Express"):
             t['transaction_processor'] = "American Express Merchant Account"
@@ -216,7 +235,15 @@ def write_to_file(config,file_path,batchTimestamp,search_results_processed,field
         csv_writer = csv.writer(tempfile, dialect=format)#, fieldnames=fieldnames )
         csv_writer.writerow(",".join(fieldnames))
         for r in search_results_processed:
-            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],r['shipping_country_name'],r['shipping_postal_code'],r['shipping_region'],r['billing_region'],r['source'],batchTimestamp])
+            csv_writer.writerow([r['transaction_id'],r['transaction_type'],r['transaction_status'],r['transaction_created_at'],
+                r['submitted_for_settlement_date'],r['settlement_date'],r['transaction_disbursement_date'],r['transaction_merchant_account_id'],
+                r['amount_authorized'],r['amount_submitted_for_settlement'],r['transaction_service_fee_amount'],r['transaction_tax_amount'],
+                r['transaction_tax_exempt'],r['transaction_purchase_order_number'],r['transaction_order_id'],r['transaction_refunded_transaction_id'],
+                r['transaction_payment_instrument_type'],r['transaction_card_type'],r['transaction_customer_id'],r['transaction_token'],
+                r['transaction_customer_company'],r['transaction_processor'],r['settlement_batch_id'],r['settlement_batch_date'],r['user'],
+                r['shipping_country_name'],r['shipping_postal_code'],r['shipping_region'],r['billing_region'],r['source'],batchTimestamp,
+                r['ach_accountholder_name'],r['ach_bank_name'],r['ach_business_name'],r['ach_last4'],r['ach_routing_number'],
+                r['ach_account_type'],r['ach_ownership_type']])
     LOG.info("Wrote to  temp file %s" % file_path)
 
 def write_file_and_upload_to_s3(config,search_results_processed,fieldnames):
@@ -268,7 +295,9 @@ def get_data():
     'settlement_date_utc','disbursement_date_utc','merchant_account','amount_authorized','amount_submitted_for_settlement','service_fee',
     'tax_amount','tax_exempt','purchase_order_number','order_id','refunded_transaction_id','payment_instrument_type','card_type',
     'customer_id','payment_method_token','customer_company','processor','settlement_batch_id','settlement_batch_date','"user"',
-    'shipping_country_name','shipping_postal_code','shipping_region','billing_region','source','date_uploaded_at']
+    'shipping_country_name','shipping_postal_code','shipping_region','billing_region','source','date_uploaded_at',
+    'ach_accountholder_name','ach_bank_name','ach_business_name','ach_last4','ach_routing_number','ach_account_type',
+    'ach_ownership_type']
 
 
     last_updated_date = get_last_updated(config)
@@ -305,6 +334,7 @@ def get_data():
         LOG.info("check for dupes passed")
 
         LOG.info("-------------  processed data for date = %s ----------------------------" % start.strftime('%Y-%m-%d %H:%M:%S.%f'))
+
 
 if __name__=="__main__":
     get_data()
