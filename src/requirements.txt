@@ -1,6 +1,5 @@
 psycopg2-binary
 braintree
-boto
 python-dateutil
 pandas
 s3fs

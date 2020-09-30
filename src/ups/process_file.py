@@ -89,6 +89,8 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
     if(initial_dataframe_rows != final_dataframe_rows):
         raise Exception("We lost rows on merge for file %s" % file_raw)
 
+    LOG.info("Processed file s3 path: " + s3_path+file_processed)
+
     final_df.to_csv(s3_path+file_processed, index=False)
     LOG.info("uploaded new file to S3")
 
