@@ -1,10 +1,18 @@
 {
+    "AWS": {
+        "ACCESSKEY": "AKIAZDOQ5WI7XOL2HMVF"
+    },
     "redshift":{
         "host":"pensieve-prod-5-vpc.cmitoh9ob6og.us-east-1.redshift.amazonaws.com",
         "port":5439,
+        "user":"externalsources_loader",
         "database":"pensieve"
     },
     "braintree":{
+        "braintree":{
+            "environment":"braintree.Environment.Production",
+            "merchant_id":"n99bwkt374zswdbr"
+        },
         "S3": {
             "BUCKET":  "boxed-pensieve-s3-redshift",
             "UPLOAD_DIR": "braintree/prod"
@@ -19,6 +27,8 @@
         "FILE_DUMP_TEMP_DIR": "/srv/app/temp/ups/prod/",
         "merge_csv_path" : "s3://boxed-pensieve-s3-redshift/ups/ups_conversion/desc_key.csv",
         "ftp":{
+            "ftp_url" : "ftp2.ups.com",
+            "ftp_user": "BOXED0919",
             "archive_folder":"archive/"
         },
         "S3": {
