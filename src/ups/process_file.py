@@ -3,8 +3,8 @@ import sys
 import logging
 import pandas as pd
 import re
-import s3fs
 from datetime import datetime
+from io import StringIO
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, \
@@ -63,9 +63,9 @@ required_cols = [
                 ]
 
 
-def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
+def process_file(s3_client, bucket, file_raw, processed_s3_path, csv_path):
     LOG.info("start pandas processing")
-    df = pd.read_csv(local_path+file_raw, dtype=str,low_memory=False, verbose = True)
+    df = pd.read_csv(file_raw, dtype=str,low_memory=False, verbose = True)
     LOG.info("make dataframe")
     current_columns = df.columns.tolist()
     new_columns = [make_snake_case(i)  for i in current_columns]
@@ -79,7 +79,8 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
     df['sender_postal'] = df.apply(lambda row: str(row['sender_postal'])[:5], axis=1)
     LOG.info("fix postal codes")
 
-    desc_csv = pd.read_csv(csv_path)
+    read_file = s3_client.get_object(bucket, csv_path)
+    desc_csv = pd.read_csv(read_file['Body'])
     LOG.info("read desc csv")
     final_df = df.merge(desc_csv,how='left',on='charge_desc')
     LOG.info("merged new file")
@@ -89,8 +90,9 @@ def process_file(local_path,file_raw,file_processed,s3_path, csv_path):
     if(initial_dataframe_rows != final_dataframe_rows):
         raise Exception("We lost rows on merge for file %s" % file_raw)
 
-    LOG.info("Processed file s3 path: " + s3_path+file_processed)
-
-    final_df.to_csv(s3_path+file_processed, index=False)
+    LOG.info("Processed file s3 path: " + processed_s3_path)
+    csv_buffer = StringIO()
+    final_df.to_csv(csv_buffer, index=False)
+    # s3_client.upload_file(s3_path+file_processed,bucket,file_processed)
+    s3_client.put_object(bucket, processed_s3_path, Body=csv_buffer.getvalue())
     LOG.info("uploaded new file to S3")
-

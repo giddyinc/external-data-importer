@@ -3,7 +3,6 @@ import sys
 import logging
 import pandas as pd
 import re
-import s3fs
 import utils
 import process_file
 import psycopg2
@@ -123,8 +122,10 @@ def get_data():
             ups_raw = config['ups']['S3']['UPS_WEEKLY_RAW']
             ups_processed = config['ups']['S3']['UPS_WEEKLY_PROCESSED']
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
-            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+ups_raw+"/", file, local_file_path)
-            process_file.process_file(local_path,file,file+"_processed","s3://%s/%s%s/" % (s3_bucket,s3_copy_folder,ups_processed), merge_csv_path)
+            utils.upload_file_to_s3(s3_conn, s3_bucket, s3_copy_folder+ups_raw+"/", file, local_file_path)
+            process_file.process_file(s3_conn, s3_bucket, local_file_path,
+                "%s%s/%s_processed" % (s3_copy_folder, ups_processed, file)
+                ,merge_csv_path)
             LOG.info("processed_file")
             copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+file+"_processed" , fieldnames)
             LOG.info("uploaded to redshift")
