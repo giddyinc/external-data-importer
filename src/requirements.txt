@@ -2,5 +2,4 @@ psycopg2-binary
 braintree
 python-dateutil
 pandas
-s3fs
 boto3

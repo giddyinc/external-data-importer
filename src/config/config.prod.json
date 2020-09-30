@@ -25,7 +25,7 @@
     },
     "ups":{
         "FILE_DUMP_TEMP_DIR": "/srv/app/temp/ups/prod/",
-        "merge_csv_path" : "s3://boxed-pensieve-s3-redshift/ups/ups_conversion/desc_key.csv",
+        "merge_csv_path" : "ups/ups_conversion/desc_key.csv",
         "ftp":{
             "ftp_url" : "ftp2.ups.com",
             "ftp_user": "BOXED0919",
