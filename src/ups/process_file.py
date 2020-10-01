@@ -79,7 +79,7 @@ def process_file(s3_client, bucket, file_raw, processed_s3_path, csv_path):
     df['sender_postal'] = df.apply(lambda row: str(row['sender_postal'])[:5], axis=1)
     LOG.info("fix postal codes")
 
-    read_file = s3_client.get_object(bucket, csv_path)
+    read_file = s3_client.get_object(Bucket=bucket, Key=csv_path)
     desc_csv = pd.read_csv(read_file['Body'])
     LOG.info("read desc csv")
     final_df = df.merge(desc_csv,how='left',on='charge_desc')
@@ -94,5 +94,5 @@ def process_file(s3_client, bucket, file_raw, processed_s3_path, csv_path):
     csv_buffer = StringIO()
     final_df.to_csv(csv_buffer, index=False)
     # s3_client.upload_file(s3_path+file_processed,bucket,file_processed)
-    s3_client.put_object(bucket, processed_s3_path, Body=csv_buffer.getvalue())
+    s3_client.put_object(Bucket=bucket, Key=processed_s3_path, Body=csv_buffer.getvalue())
     LOG.info("uploaded new file to S3")
