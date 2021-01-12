@@ -36,7 +36,8 @@
             "UPLOAD_DIR": "ups/finished_processing/",
             "QVD_RAW":"QVD",
             "UPS_WEEKLY_RAW":"UPS_WEEKLY/raw",
-            "UPS_WEEKLY_PROCESSED":"UPS_WEEKLY/processed"
+            "UPS_WEEKLY_PROCESSED":"UPS_WEEKLY/processed",
+            "UNKNOWN": "unknown"
         },
         "schema": {
             "schema_name":"externalsources",
