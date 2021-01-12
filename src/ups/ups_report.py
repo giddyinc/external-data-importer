@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import re
 import utils
+import datetime
 import process_file
 import psycopg2
 from ftplib import FTP_TLS
@@ -75,6 +76,8 @@ def copy_into_redshift(config, s3_key, fieldnames):
 
 def get_data():
     LOG.info('App started')
+
+    error = False
     APP_HOME = os.environ['APP_HOME']
     APP_ENV = os.environ['APP_ENV']
     SECRET_PATH = os.environ['SECRET_PATH']
@@ -99,6 +102,7 @@ def get_data():
 
     if(len(files) < 2):
         LOG.info("No new files found")
+        return
 
     s3_bucket = config['ups']['S3']['BUCKET']
     s3_copy_folder = config['ups']['S3']['UPLOAD_DIR']
@@ -109,6 +113,8 @@ def get_data():
 
     for file in files:
         LOG.info("-------------  processing file %s ----------------------------" % file)
+        today = str(datetime.date.today())
+
         ftp = get_ftp_connection(config["ups"]["ftp"])
         local_file_path = local_path+file
         s3_conn = utils.s3_connect(config['AWS']['ACCESSKEY'], config['AWS']['SECRETKEY'])
@@ -122,20 +128,30 @@ def get_data():
             ups_raw = config['ups']['S3']['UPS_WEEKLY_RAW']
             ups_processed = config['ups']['S3']['UPS_WEEKLY_PROCESSED']
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
-            utils.upload_file_to_s3(s3_conn, s3_bucket, s3_copy_folder+ups_raw+"/", file, local_file_path)
+            utils.upload_file_to_s3(s3_conn, s3_bucket, s3_copy_folder+ups_raw+"/"+today+"/", file, local_file_path)
             process_file.process_file(s3_conn, s3_bucket, local_file_path,
                 "%s%s/%s_processed" % (s3_copy_folder, ups_processed, file)
                 ,merge_csv_path)
             LOG.info("processed_file")
-            copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+file+"_processed" , fieldnames)
+            copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+today+"/"+file+"_processed" , fieldnames)
             LOG.info("uploaded to redshift")
             move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
             LOG.info("move ftp file to archive")
             os.remove(local_file_path)
+        elif(file.startswith('archive')):
+            pass
         else:
-            LOG.info("Unexpected file type %s found on FTP server" % (file))
+            LOG.error("Unexpected file type %s found on FTP server" % (file))
+            download_file_from_ftp(ftp, ftp_path, file,local_file_path )
+            utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+config['ups']['S3']['UNKNOWN']+"/", file, local_file_path)
+            move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path, today)
+            os.remove(local_file_path)
+            error = True
         close_ftp_connection(ftp)
-        LOG.info("-------------  processed file %s ----------------------------" % file)
+        LOG.debug("-------------  processed file %s ----------------------------" % file)
+
+    if (error == True):
+        raise Exception("errors found")
 
 if __name__=="__main__":
     get_data()
