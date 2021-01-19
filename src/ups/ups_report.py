@@ -130,7 +130,7 @@ def get_data():
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
             utils.upload_file_to_s3(s3_conn, s3_bucket, s3_copy_folder+ups_raw+"/"+today+"/", file, local_file_path)
             process_file.process_file(s3_conn, s3_bucket, local_file_path,
-                "%s%s/%s_processed" % (s3_copy_folder, ups_processed, file)
+                "%s%s/%s/%s_processed" % (s3_copy_folder, ups_processed, today,file)
                 ,merge_csv_path)
             LOG.info("processed_file")
             copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+today+"/"+file+"_processed" , fieldnames)
