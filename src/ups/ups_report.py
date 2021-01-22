@@ -48,6 +48,32 @@ def close_ftp_connection(ftp):
     except Exception as e:
         ftp.close()
 
+def copy_into_snowflake(config, s3_key, fieldnames):
+    db_config = config['snowflake']
+    with snowflake.connector.connect(**db_config) as sf_conn:
+        LOG.info("copying to SNOWFLAKE %s.%s" % (config['ups']['schema']['schema_name'],config['ups']['schema']['weekly_table_name']))
+        with sf_conn.cursor() as sf_cur:
+            query_template = "COPY INTO %s.%s (%s)  FROM 's3://%s/%s' credentials = (aws_key_id='%s' aws_secret_key='%s') file_format = ( type = csv FIELD_DELIMITER = ',' SKIP_HEADER = 1 TIME_FORMAT = 'YYYY-MM-DD HH:MI:SS'  FIELD_OPTIONALLY_ENCLOSED_BY = '\"' ) TRUNCATECOLUMNS = TRUE;"
+            query = query_template % (
+                    config['ups']['schema']['schema_name'],
+                    config['ups']['schema']['weekly_table_name'],
+                    ",".join(fieldnames),
+                    config['ups']['S3']['BUCKET'],
+                    s3_key,
+                    config['AWS']['ACCESSKEY'],
+                    config['AWS']['SECRETKEY'])
+            LOG.info(query)
+            try:
+                sf_cur.execute( query )
+                sf_conn.commit()
+            except Exception as e:
+                sf_conn.rollback()
+                LOG.error("Error copying s3 file for %s to snowflake with error %s and query:\n%s\n" % (str(e), config['ups']['schema']['weekly_table_name'], query))
+                raise e
+        
+    
+
+
 def copy_into_redshift(config, s3_key, fieldnames):
     db_config = config['redshift']
     with psycopg2.connect(dbname=db_config["database"], user=db_config["user"], host=db_config["host"],port=db_config["port"],password=db_config["password"] ) as rs_conn:
@@ -71,7 +97,6 @@ def copy_into_redshift(config, s3_key, fieldnames):
                 rs_conn.rollback()
                 LOG.error("Error copying s3 file for %s to redshift with error %s and query:\n%s\n" % (str(e), config['ups']['schema']['weekly_table_name'], query))
                 raise e
-    rs_conn.close()
 
 
 def get_data():
@@ -135,6 +160,8 @@ def get_data():
             LOG.info("processed_file")
             copy_into_redshift(config, s3_copy_folder+ups_processed+"/"+today+"/"+file+"_processed" , fieldnames)
             LOG.info("uploaded to redshift")
+            copy_into_snowflake(config, s3_copy_folder+ups_processed+"/"+today+"/"+file+"_processed" , fieldnames)
+            LOG.info("uploaded to snowflake")
             move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
             LOG.info("move ftp file to archive")
             os.remove(local_file_path)
