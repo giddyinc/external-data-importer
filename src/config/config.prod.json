@@ -8,6 +8,13 @@
         "user":"externalsources_loader",
         "database":"pensieve"
     },
+    "snowflake": {
+        "user": "DATA_LOADER",
+        "account": "rh23973.us-east-1",
+        "warehouse": "WAREHOUSE_1",
+        "schema": "DIMENSIONS",
+        "database": "BOXED_PENSIEVE"
+    },
     "braintree":{
         "braintree":{
             "environment":"braintree.Environment.Production",
