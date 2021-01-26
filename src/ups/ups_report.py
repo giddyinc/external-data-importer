@@ -7,6 +7,7 @@ import utils
 import datetime
 import process_file
 import psycopg2
+import snowflake.connector
 from ftplib import FTP_TLS
 
 
