@@ -4,3 +4,4 @@ python-dateutil
 pandas
 boto3
 boto
+snowflake-connector-python
