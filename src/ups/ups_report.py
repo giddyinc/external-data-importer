@@ -172,7 +172,7 @@ def get_data():
             LOG.error("Unexpected file type %s found on FTP server" % (file))
             download_file_from_ftp(ftp, ftp_path, file,local_file_path )
             utils.upload_file_to_s3(s3_conn,s3_bucket,s3_copy_folder+config['ups']['S3']['UNKNOWN']+"/", file, local_file_path)
-            move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path, today)
+            move_file_to_ftp_archive(ftp,file,ftp_archive_folder_path)
             os.remove(local_file_path)
             error = True
         close_ftp_connection(ftp)
